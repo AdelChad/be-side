@@ -2,11 +2,11 @@ import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { Activities } from "src/activities/activities.entity";
 import { GooglePlaceSearchDto } from "./dto/add-activities.dto";
 import { GeocodeAddresse } from "src/interface/geocodeAddresse";
-import { GoogleFunction } from "src/utils/Google";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Tags } from "src/categ_activ/categ_activ.entity";
+import { CategActiv } from "src/categ_activ/categ_activ.entity";
 import { In, Repository } from "typeorm";
-import { SousCategorie } from "src/sous_categorie/sousCategorie.entity";
+import { GoogleFunction } from "src/utils/Google";
+import { Restaurant } from "src/restaurant/restaurant.entity";
 
 require('dotenv').config();
 
@@ -15,14 +15,14 @@ export class GoogleApiService {
     constructor(
         public googleFunction: GoogleFunction,
 
-        @InjectRepository(Tags)
-        public tagsRepository: Repository<Tags>,
-
-        @InjectRepository(SousCategorie)
-        public sousCategorieRepository: Repository<SousCategorie>,
+        @InjectRepository(CategActiv)
+        public categsRepository: Repository<CategActiv>,
 
         @InjectRepository(Activities)
         public activitiesRepository: Repository<Activities>,
+
+        @InjectRepository(Activities)
+        public restaurantsRepository: Repository<Restaurant>,
 
     ) { }
 
@@ -72,6 +72,10 @@ export class GoogleApiService {
             throw new HttpException("The API google don't answer", HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
+
+    public async insertCategs(){
+        this.googleFunction.insertCategs()
+    }
     
     
     private async createActivitiesWhatWeDo(result, type: string) {
@@ -120,8 +124,7 @@ export class GoogleApiService {
                         const tagName = this.googleFunction.getTagFr(type)
                         const daytime = this.googleFunction.getPeriods(type)
                         const spaceType = this.googleFunction.getPlace(type)
-                        const tag = await this.tagsRepository.findBy({ name: tagName.name })
-                        const subCategory = await this.sousCategorieRepository.findBy({ name: In(tagName.subCategory) })
+                        const categActivite = await this.categsRepository.findBy({ name: tagName.name })
                         
 
                         let activities = new Activities()
@@ -139,8 +142,7 @@ export class GoogleApiService {
                         activities.city = city
                         activities.country = country
                         activities.price = ''
-                        activities.tags = tag
-                        activities.sousCategorie = subCategory
+                        activities.categActiv = categActivite
                         activities.googleId = place.place_id
 
 

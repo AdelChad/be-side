@@ -1,19 +1,19 @@
 import { Module } from '@nestjs/common';
-import { ActivitiesController } from './activities.controller';
-import { ActivitiesService } from './activities.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Activities } from './activities.entity';
+import { Restaurant } from './restaurant.entity';
 import { Trigonometrie } from 'src/utils/trigonometrie';
 import { CategActiv } from 'src/categ_activ/categ_activ.entity';
 import { GoogleApiModule } from 'src/google-api/google-api.module';
 import { PlanningModule } from 'src/planning/planning.module';
 import { UserModule } from 'src/user/user.module';
+import { RestaurantController } from './restaurant.controller';
+import { RestaurantService } from './restaurant.service';
 
 
 @Module({
-  imports: [GoogleApiModule, PlanningModule, UserModule, TypeOrmModule.forFeature([Activities, CategActiv])],
-  controllers: [ActivitiesController],
-  providers: [ActivitiesService, Trigonometrie],
-  exports: [ActivitiesService]
+  imports: [GoogleApiModule, PlanningModule, UserModule, TypeOrmModule.forFeature([Restaurant, CategActiv])],
+  controllers: [RestaurantController],
+  providers: [RestaurantService, Trigonometrie],
+  exports: [RestaurantService]
 })
 export class ActivitiesModule { }

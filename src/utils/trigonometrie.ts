@@ -1,12 +1,13 @@
 import { Injectable } from "@nestjs/common";
 import { Activities } from "src/activities/activities.entity";
 import { GeocodeAddresse } from "src/interface/geocodeAddresse";
+import { Restaurant } from "src/restaurant/restaurant.entity";
 
 @Injectable()
 export class Trigonometrie {
 
     //loi d'haversin aller voir si ça vous intéresse 
-    distance(positionUser: GeocodeAddresse, activities: Activities, radius: number = 5): boolean {
+    distance(positionUser: GeocodeAddresse, activities: Activities|Restaurant, radius: number = 5): boolean {
         const R = 6371; //Rayon de la terre en Kilomètre By google c'est important dans les calcules trigonométrique comme celui ci-dessous 
 
         const lat1 = positionUser.lat

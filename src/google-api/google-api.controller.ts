@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from "@nestjs/common";
+import { Body, Controller, Get, Post } from "@nestjs/common";
 import { GoogleApiService } from "./google-api.service";
 import { GooglePlaceSearchDto } from "./dto/add-activities.dto";
 
@@ -10,5 +10,10 @@ export class GoogleApiController {
     @Post()
     createActivities(@Body() googlePlaceSearchDto: GooglePlaceSearchDto) {
         return this.googleApiService.createActivitiesBygoogle(googlePlaceSearchDto)
+    }
+
+    @Get()
+    test() {
+        this.googleApiService.insertCategs()
     }
 }

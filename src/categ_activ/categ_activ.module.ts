@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { TagsController } from './categ_activ.controller';
-import { TagsService } from './categ_activ.service';
+import { CategController } from './categ_activ.controller';
+import { CategService } from './categ_activ.service';
 import { CategActiv } from './categ_activ.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Activities } from 'src/activities/activities.entity';
@@ -8,7 +8,7 @@ import { Activities } from 'src/activities/activities.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([CategActiv, Activities])],
-  controllers: [TagsController],
-  providers: [TagsService],
+  controllers: [CategController],
+  providers: [CategService],
 })
-export class TagsModule { }
+export class CategModule { }

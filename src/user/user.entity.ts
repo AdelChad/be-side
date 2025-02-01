@@ -1,6 +1,7 @@
 import { Role } from 'src/enum/role.enum';
 import { Groupe } from 'src/groupe/groupe.entity';
 import { Message } from 'src/message/message.entity';
+import { Planning } from 'src/planning/planning.entity';
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany } from 'typeorm';
 
 @Entity()
@@ -37,6 +38,9 @@ export class User {
 
     @Column({ type: 'enum', enum: Role, default: Role.User })
     role: Role;
+
+    @OneToMany(() => Planning, planning => planning.user)
+    planning: Planning[]
 
     @OneToMany(() => Groupe, groupe => groupe.creator)
     groupsCreated: Groupe[];

@@ -1,17 +1,21 @@
-import { Module } from '@nestjs/common';
+import { PlanningModule } from './planning/planning.module';
+import { GoogleApiModule } from './google-api/google-api.module';
+import { Global, Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
+import { AuthModule } from './auth/auth.module';
+import { ActivitiesModule } from './activities/activities.module';
+import { CategModule } from './categ_activ/categ_activ.module';
 import { DatabaseModule } from './database/database.module';
 import { ConfigModule } from '@nestjs/config';
-import { AuthModule } from './auth/auth.module';
-import { GroupeModule } from './groupe/groupe.module';
-import { MessageModule } from './message/message.module';
+import { ActivityDayModule } from './activity_day/acitivity-day.module';
 require('dotenv').config();
 
 @Module({
-    imports: [ DatabaseModule, ConfigModule.forRoot({ isGlobal: true }), AuthModule, UserModule, GroupeModule, MessageModule],
-    controllers: [AppController],
-    providers: [AppService],
+  imports: [
+    PlanningModule, DatabaseModule, ConfigModule.forRoot({ isGlobal: true }), ActivitiesModule, AuthModule, UserModule, CategModule, GoogleApiModule, ActivityDayModule],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule { }

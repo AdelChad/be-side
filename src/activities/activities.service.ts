@@ -7,7 +7,6 @@ import { UpdateActivityDto } from './dto/update-activities.dto';
 import { Trigonometrie } from 'src/utils/trigonometrie';
 import { GoogleApiService } from 'src/google-api/google-api.service';
 import { CategActiv } from 'src/categ_activ/categ_activ.entity';
-import { ActivityDayService } from 'src/activity_day/activity-day.service';
 import { PlanningService } from 'src/planning/planning.service';
 import { User } from 'src/user/user.entity';
 import { GenerateActivitiesPos } from './dto/generate-activities-pos.dto';
@@ -24,7 +23,6 @@ export class ActivitiesService {
         public categActivRepository: Repository<CategActiv>,
 
         public trigonometrie: Trigonometrie,
-        private activityDayService: ActivityDayService,
         private googleApi: GoogleApiService,
         private planningService: PlanningService
 

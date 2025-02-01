@@ -6,6 +6,12 @@ import { User } from 'src/user/user.entity';
 import { Groupe } from 'src/groupe/groupe.entity';
 import { Channel } from 'src/channel/channel.entity';
 import { Message } from 'src/message/message.entity';
+import { Activities } from 'src/activities/activities.entity';
+import { ActivityDay } from 'src/activity_day/activity-day.entity';
+import { Planning } from 'src/planning/planning.entity';
+import { CategActiv } from 'src/categ_activ/categ_activ.entity';
+import { Restaurant } from 'src/restaurant/restaurant.entity';
+import { CategRestau } from 'src/categ_restau/categ_restau.entity';
 
 require('dotenv').config();
 
@@ -18,7 +24,7 @@ require('dotenv').config();
         username: configService.getOrThrow('DB_USERNAME'),
         password: configService.getOrThrow('DB_PASSWORD'),
         database: configService.getOrThrow('DB_NAME'),
-        entities: [User, Groupe, Channel, Message],
+        entities: [ActivityDay, Activities, User, Planning, CategActiv, Groupe, Message, Channel, Restaurant, CategRestau],
         migrations: ['dist/migrations/**/*.js'],
         synchronize: false,
         logging: false,

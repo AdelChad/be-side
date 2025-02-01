@@ -4,11 +4,10 @@ import { GoogleApiService } from './google-api.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Activities } from 'src/activities/activities.entity';
 import { GoogleFunction } from 'src/utils/Google';
-import { Tags } from 'src/categ_activ/categ_activ.entity';
-import { SousCategorie } from 'src/sous_categorie/sousCategorie.entity';
+import { CategActiv } from 'src/categ_activ/categ_activ.entity';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Activities, Tags, SousCategorie])],
+    imports: [TypeOrmModule.forFeature([Activities, CategActiv])],
     controllers: [GoogleApiController],
     providers: [GoogleApiService, GoogleFunction],
     exports: [GoogleApiService, GoogleFunction]
