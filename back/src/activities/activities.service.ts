@@ -117,4 +117,25 @@ export class ActivitiesService {
             console.error('Error fetching activities:', error);
         }
     }
+
+    async activitiesMainCity(user: User): Promise<Array<Activities>> {
+        try {
+            let activities: Array<Activities> = []
+    
+            activities = await this.activitiesRepository.find({
+                where: {
+                    city: Like(`%${user.city}%`)
+                },
+                order: {
+                    rating: 'DESC',
+                },
+                take: 20,
+            });
+    
+            return activities;
+    
+        } catch (error) {
+            console.error('Error fetching activities:', error);
+        }
+    }
 }
