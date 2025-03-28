@@ -8,10 +8,11 @@ import { PlanningModule } from 'src/planning/planning.module';
 import { UserModule } from 'src/user/user.module';
 import { RestaurantController } from './restaurant.controller';
 import { RestaurantService } from './restaurant.service';
+import { User } from 'src/user/user.entity';
 
 
 @Module({
-  imports: [GoogleApiModule, PlanningModule, UserModule, TypeOrmModule.forFeature([Restaurant, CategActiv])],
+  imports: [GoogleApiModule, PlanningModule, UserModule, TypeOrmModule.forFeature([Restaurant, CategActiv, User])],
   controllers: [RestaurantController],
   providers: [RestaurantService, Trigonometrie],
   exports: [RestaurantService]
