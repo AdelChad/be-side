@@ -17,4 +17,4 @@ import { User } from 'src/user/user.entity';
   providers: [RestaurantService, Trigonometrie],
   exports: [RestaurantService]
 })
-export class ActivitiesModule { }
+export class RestaurantsModule { }
