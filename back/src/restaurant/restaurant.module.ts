@@ -8,12 +8,13 @@ import { PlanningModule } from 'src/planning/planning.module';
 import { UserModule } from 'src/user/user.module';
 import { RestaurantController } from './restaurant.controller';
 import { RestaurantService } from './restaurant.service';
+import { CategRestau } from 'src/categ_restau/categ_restau.entity';
 
 
 @Module({
-  imports: [GoogleApiModule, PlanningModule, UserModule, TypeOrmModule.forFeature([Restaurant, CategActiv])],
+  imports: [GoogleApiModule, PlanningModule, UserModule, TypeOrmModule.forFeature([Restaurant, CategActiv, CategRestau])],
   controllers: [RestaurantController],
   providers: [RestaurantService, Trigonometrie],
   exports: [RestaurantService]
 })
-export class ActivitiesModule { }
+export class RestaurantsModule { }

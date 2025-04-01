@@ -80,4 +80,25 @@ export class RestaurantService {
             console.error('Error fetching restaurants:', error);
         }
     }
+
+    async RestaurantsMainCity(user: User): Promise<Array<Restaurant>> {
+        try {
+            let restaurants: Array<Restaurant> = []
+    
+            restaurants = await this.restaurantRepository.find({
+                where: {
+                    city: Like(`%${user.city}%`)
+                },
+                order: {
+                    rating: 'DESC',
+                },
+                take: 20,
+            });
+    
+            return restaurants;
+    
+        } catch (error) {
+            console.error('Error fetching restaurants:', error);
+        }
+    }
 }
