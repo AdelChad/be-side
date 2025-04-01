@@ -1,6 +1,7 @@
 import { DayTime, Place } from "src/enum/detailActivity";
 import { CategRestau } from "src/categ_restau/categ_restau.entity";
 import { BaseEntity, Column, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn } from "typeorm";
+import { User } from "src/user/user.entity";
 
 @Entity()
 export class Restaurant extends BaseEntity {
@@ -59,4 +60,7 @@ export class Restaurant extends BaseEntity {
 
     @Column()
     photo: string
+
+    @ManyToMany(() => User, user => user.favoritsRestaurants) 
+    favorits: User[];
 }
