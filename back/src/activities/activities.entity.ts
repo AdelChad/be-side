@@ -56,4 +56,7 @@ export class Activities extends BaseEntity {
     @ManyToMany(() => CategActiv)
     @JoinTable()
     categActiv: CategActiv[]
+
+    @Column()
+    photo: string
 }

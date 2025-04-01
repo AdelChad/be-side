@@ -77,6 +77,20 @@ export class GoogleApiService {
         this.googleFunction.insertCategs()
     }
     
+    private async getFirstPhoto(placeId: string): Promise<string | null> {
+        try {
+            const response = await fetch(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&key=${process.env.API_KEY_GOOGLE.toString()}&fields=photos`);
+            const result = await response.json();
+
+            if (response.ok && result.result.photos?.length) {
+                const photoReference = result.result.photos[0].photo_reference;
+                return `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${photoReference}&key=${process.env.API_KEY_GOOGLE.toString()}`;
+            }
+        } catch (error) {
+            console.log(`Error fetching photo for place ${placeId}:`, error);
+        }
+        return null;
+    }
     
     private async createActivitiesWhatWeDo(result, type: string) {
         for (let place of result.results) {
@@ -128,6 +142,9 @@ export class GoogleApiService {
                         
 
                         let activities = new Activities()
+                        const photoUrl = await this.getFirstPhoto(place.place_id);
+                        console.log(photoUrl);
+                        
 
                         activities.name = result.result.name
                         activities.rating = result.result.rating
@@ -144,8 +161,8 @@ export class GoogleApiService {
                         activities.price = ''
                         activities.categActiv = categActivite
                         activities.googleId = place.place_id
-
-
+                        activities.photo = photoUrl || ''
+                        
                         await activities.save()
 
 

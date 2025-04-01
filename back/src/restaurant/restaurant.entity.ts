@@ -56,4 +56,7 @@ export class Restaurant extends BaseEntity {
     @ManyToMany(() => CategRestau)
     @JoinTable()
     categRestau: CategRestau[]
+
+    @Column()
+    photo: string
 }
