@@ -7,6 +7,7 @@ import { CategActiv } from "src/categ_activ/categ_activ.entity";
 import { In, Repository } from "typeorm";
 import { GoogleFunction } from "src/utils/Google";
 import { Restaurant } from "src/restaurant/restaurant.entity";
+import { CategRestau } from "src/categ_restau/categ_restau.entity";
 
 require('dotenv').config();
 
@@ -17,6 +18,9 @@ export class GoogleApiService {
 
         @InjectRepository(CategActiv)
         public categsRepository: Repository<CategActiv>,
+
+        @InjectRepository(CategRestau)
+        public categsResRepository: Repository<CategRestau>,
 
         @InjectRepository(Activities)
         public activitiesRepository: Repository<Activities>,
@@ -138,12 +142,11 @@ export class GoogleApiService {
                         const tagName = this.googleFunction.getTagFr(type)
                         const daytime = this.googleFunction.getPeriods(type)
                         const spaceType = this.googleFunction.getPlace(type)
-                        const categActivite = await this.categsRepository.findBy({ name: tagName.name })
-                        
+                        const categActivite = await this.categsResRepository.findBy({ name: tagName.name })
+                    
 
-                        let activities = new Activities()
+                        let activities = new Restaurant()
                         const photoUrl = await this.getFirstPhoto(place.place_id);
-                        console.log(photoUrl);
                         
 
                         activities.name = result.result.name
@@ -159,13 +162,11 @@ export class GoogleApiService {
                         activities.city = city
                         activities.country = country
                         activities.price = ''
-                        activities.categActiv = categActivite
+                        activities.categRestau = categActivite
                         activities.googleId = place.place_id
                         activities.photo = photoUrl || ''
                         
                         await activities.save()
-
-
                     }
                 
                 } catch(e){
