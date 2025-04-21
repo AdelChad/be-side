@@ -2,6 +2,9 @@
 
 #app {
   width: 100vw !important;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
 }
 
   
@@ -19,3 +22,15 @@ a,
   }
 }
 
+@media (min-width: 1024px) {
+  body {
+    display: flex;
+    place-items: center;
+  }
+
+  #app {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 0;
+  }
+}

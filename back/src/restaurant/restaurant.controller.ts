@@ -39,6 +39,16 @@ export class RestaurantController {
 
     @UseGuards(AuthGuard)
     @Roles(['user'])
+    @Get("carrousel")
+    async restaurantsForCarrousel(@Req() request): Promise<Array<Restaurant> | HttpException> {
+        const userRequest: UserRequest = request.user
+        const user = await this.userService.findOne(userRequest.email)
+
+        return this.restaurantsService.RestaurantsMainCity(user);
+    }
+
+    @UseGuards(AuthGuard)
+    @Roles(['user'])
     @Get(":id")
     async findOneRestaurants(@Param('id', ParseIntPipe) id: number): Promise<Restaurant | HttpException> {
         let restaurants = await this.restaurantsService.restaurantRepository.findOne({ where: { id: id }, relations: { categRestau: true } })
