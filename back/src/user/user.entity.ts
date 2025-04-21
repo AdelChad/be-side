@@ -45,6 +45,7 @@ export class User {
     planning: Planning[]
 
     @OneToMany(() => Groupe, groupe => groupe.creator)
+  
     @JoinTable()
     groupsCreated: Groupe[];
 

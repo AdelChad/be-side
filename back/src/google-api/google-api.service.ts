@@ -144,7 +144,6 @@ export class GoogleApiService {
                         let activities = new Activities()
                         const photoUrl = await this.getFirstPhoto(place.place_id);
                         console.log(photoUrl);
-                        
 
                         activities.name = result.result.name
                         activities.rating = result.result.rating
@@ -162,7 +161,6 @@ export class GoogleApiService {
                         activities.categActiv = categActivite
                         activities.googleId = place.place_id
                         activities.photo = photoUrl || ''
-                        
                         await activities.save()
 
 
