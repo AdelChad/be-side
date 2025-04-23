@@ -35,26 +35,25 @@ export class User {
     @Column({ unique: true })
     email: string
 
-    @Column()
+    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     dateJoined: Date
 
     @Column({ type: 'enum', enum: Role, default: Role.User })
     role: Role;
 
+    @Column({ nullable: true })
+    profilePicture: string;
+
     @OneToMany(() => Planning, planning => planning.user)
     planning: Planning[]
 
     @OneToMany(() => Groupe, groupe => groupe.creator)
-  
-    @JoinTable()
     groupsCreated: Groupe[];
 
     @ManyToMany(() => Groupe, groupe => groupe.members)
-    @JoinTable()
     groups: Groupe[];
 
     @OneToMany(() => Message, message => message.author)
-    @JoinTable()
     messages: Message[];
 
     @ManyToMany(() => Activities, activitie => activitie.favorits, { cascade: true })
