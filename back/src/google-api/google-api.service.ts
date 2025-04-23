@@ -147,8 +147,6 @@ export class GoogleApiService {
 
                         let activities = new Restaurant()
                         const photoUrl = await this.getFirstPhoto(place.place_id);
-                        
-
                         activities.name = result.result.name
                         activities.rating = result.result.rating
                         activities.phoneNumber = result.result.formatted_phone_number
@@ -165,7 +163,6 @@ export class GoogleApiService {
                         activities.categRestau = categActivite
                         activities.googleId = place.place_id
                         activities.photo = photoUrl || ''
-                        
                         await activities.save()
                     }
                 

@@ -1,11 +1,13 @@
 @import './base.css';
 
 #app {
+  width: 100vw !important;
   margin: 0;
   padding: 0;
   overflow-x: hidden;
 }
 
+  
 a,
 .green {
   text-decoration: none;
