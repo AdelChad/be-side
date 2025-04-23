@@ -118,13 +118,13 @@ export class ActivitiesService {
         }
     }
 
-    async activitiesMainCity(user: User): Promise<Array<Activities>> {
+    async activitiesMainCity(): Promise<Array<Activities>> {
         try {
             let activities: Array<Activities> = []
     
             activities = await this.activitiesRepository.find({
                 where: {
-                    city: Like(`%${user.city}%`)
+                    city: Like(`%Paris%`)
                 },
                 order: {
                     rating: 'DESC',

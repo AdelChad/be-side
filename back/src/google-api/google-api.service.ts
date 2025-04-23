@@ -142,10 +142,10 @@ export class GoogleApiService {
                         const tagName = this.googleFunction.getTagFr(type)
                         const daytime = this.googleFunction.getPeriods(type)
                         const spaceType = this.googleFunction.getPlace(type)
-                        const categActivite = await this.categsResRepository.findBy({ name: tagName.name })
+                        const categActivite = await this.categsRepository.findBy({ name: tagName.name })
                     
 
-                        let activities = new Restaurant()
+                        let activities = new Activities()
                         const photoUrl = await this.getFirstPhoto(place.place_id);
                         activities.name = result.result.name
                         activities.rating = result.result.rating
@@ -160,7 +160,7 @@ export class GoogleApiService {
                         activities.city = city
                         activities.country = country
                         activities.price = ''
-                        activities.categRestau = categActivite
+                        activities.categActiv = categActivite
                         activities.googleId = place.place_id
                         activities.photo = photoUrl || ''
                         await activities.save()
