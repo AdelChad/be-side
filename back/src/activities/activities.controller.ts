@@ -39,14 +39,9 @@ export class ActivitiesController {
         return this.activitiesService.activitiesBySearch(generateActivitiesPosDto, user);
     }
 
-    @UseGuards(AuthGuard)
-    @Roles(['user'])
     @Get("carrousel")
     async activitiesForCarrousel(@Req() request): Promise<Array<Activities> | HttpException> {
-        const userRequest: UserRequest = request.user
-        const user = await this.userService.findOne(userRequest.email)
-
-        return this.activitiesService.activitiesMainCity(user);
+        return this.activitiesService.activitiesMainCity();
     }
 
     @UseGuards(AuthGuard)

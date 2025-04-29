@@ -81,13 +81,13 @@ export class RestaurantService {
         }
     }
 
-    async RestaurantsMainCity(user: User): Promise<Array<Restaurant>> {
+    async RestaurantsMainCity(): Promise<Array<Restaurant>> {
         try {
             let restaurants: Array<Restaurant> = []
     
             restaurants = await this.restaurantRepository.find({
                 where: {
-                    city: Like(`%${user.city}%`)
+                    city: Like(`%Paris%`)
                 },
                 order: {
                     rating: 'DESC',

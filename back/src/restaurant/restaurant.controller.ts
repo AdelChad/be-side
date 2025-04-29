@@ -37,14 +37,9 @@ export class RestaurantController {
         return this.restaurantsService.RestaurantsBySearch(generateRestaurantPosDto, user);
     }
 
-    @UseGuards(AuthGuard)
-    @Roles(['user'])
     @Get("carrousel")
     async restaurantsForCarrousel(@Req() request): Promise<Array<Restaurant> | HttpException> {
-        const userRequest: UserRequest = request.user
-        const user = await this.userService.findOne(userRequest.email)
-
-        return this.restaurantsService.RestaurantsMainCity(user);
+        return this.restaurantsService.RestaurantsMainCity();
     }
 
     @UseGuards(AuthGuard)

@@ -2,92 +2,101 @@
   import TheWelcome from '../components/TheWelcome.vue'
   import Navbar from '@/components/Navbar.vue'
   import Carousel from "@/components/Carousel.vue"
+  import { onMounted, ref } from 'vue'
 
+  interface Activity {
+    id: number
+    name: string
+    addresse: string
+    city: string
+    photo: string
+  }
+
+  interface Restaurant {
+    id: number
+    name: string
+    addresse: string
+    city: string
+    photo: string
+  }
+
+  const activities = ref<Activity[]>([])
+  const restaurants = ref<Restaurant[]>([])
+
+  onMounted(async () => {
+    try {
+      const activitiesAPI = await fetch('http://localhost:3000/activities/carrousel', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      })
+
+      const restaurantAPI = await fetch('http://localhost:3000/restaurants/carrousel', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      })
+
+      if (!activitiesAPI.ok || !restaurantAPI.ok) {
+        throw new Error('Failed to fetch activities')
+      }
+
+      const activitie = await activitiesAPI.json()
+      activities.value = activitie
+
+      const restaurant = await restaurantAPI.json()
+      restaurants.value = restaurant
+    } catch (error) {
+      console.log('Error fetching activities:', error)
+    }
+  })
 </script>
 
 <template>
   <div class="loading-page">
     <img src="../assets/images/beside blanc.png" alt="">
   </div>
-    <div class="main-screen">
-      <Navbar></Navbar>
-      <div class="banner">
-        <div class="titles">
-          <h1>Marre des listes interminables ? Trouvez enfin ce qui vous correspond !</h1>
-          <h2>Une recherche interactive pour des expériences sur-mesure.</h2>
-          <a class="main-btn" href="">Personnaliser ma recherche</a>
+  <div class="main-screen">
+    <Navbar></Navbar>
+    <div class="banner">
+      <div class="titles">
+        <h1>Marre des listes interminables ? Trouvez enfin ce qui vous correspond !</h1>
+        <h2>Une recherche interactive pour des expériences sur-mesure.</h2>
+        <a class="main-btn" href="">Personnaliser ma recherche</a>
+      </div>
+      <Carousel></Carousel>
+    </div>
+  </div>
+
+  <div class="second-screen">
+    <h3>Vos sorties, à votre image</h3>
+    <div class="card-container">
+      <div
+        v-for="activity in activities"
+        :key="activity.id"
+        class="bg-white shadow rounded-xl p-4"
+      >
+        <div class="card">
+          <img :src="activity.photo" />
+          <h2 class="text-lg font-semibold">{{ activity.name }}</h2>
+          <p class="text-gray-600">{{ activity.addresse }}</p>
+          <p class="text-sm text-gray-400 mt-2">{{ activity.city }}</p>
         </div>
-        <Carousel></Carousel>
       </div>
     </div>
-
-    <div class="second-screen">
-  <h3>Vos sorties, à votre image</h3>
-  <div class="card-container">
-    <div class="card">
-      <span>
-      Disneyland Paris
-      </span>
+    <h3>Ne cherchez plus, dégustez</h3>
+    <div class="card-container">
+      <div
+        v-for="restaurant in restaurants"
+        :key="restaurant.id"
+        class="bg-white shadow rounded-xl p-4"
+      >
+        <div class="card">
+          <img :src="restaurant.photo" />
+          <h2 class="text-lg font-semibold">{{ restaurant.name }}</h2>
+          <p class="text-gray-600">{{ restaurant.addresse }}</p>
+          <p class="text-sm text-gray-400 mt-2">{{ restaurant.city }}</p>
+        </div>
+      </div>
     </div>
-    <div class="card">
-      <span>
-      Disneyland Paris
-      </span>
-    </div>
-    <div class="card">
-      <span>
-      Disneyland Paris
-      </span>
-    </div>
-    <div class="card">
-      <span>
-      Disneyland Paris
-      </span>
-    </div>
-    <div class="card">
-      <span>
-      Disneyland Paris
-      </span>
-    </div>
-    <div class="card">
-      <span>
-      Disneyland Paris
-      </span>
-    </div>
-  </div>
-  <h3>Ne cherchez plus, dégustez</h3>
-  <div class="card-container">
-    <div class="card">
-      <span>
-      Disneyland Paris
-      </span>
-    </div>
-    <div class="card">
-      <span>
-      Disneyland Paris
-      </span>
-    </div>
-    <div class="card">
-      <span>
-      Disneyland Paris
-      </span>
-    </div>
-    <div class="card">
-      <span>
-      Disneyland Paris
-      </span>
-    </div>
-    <div class="card">
-      <span>
-      Disneyland Paris
-      </span>
-    </div>
-    <div class="card">
-      <span>
-      Disneyland Paris
-      </span>
-    </div>
-  </div>
   </div>  
 </template>
 
@@ -232,9 +241,6 @@ font-weight: 600;
 .card {
   height:20em;
   width:15em;
-  background:
-  url(https://images.unsplash.com/photo-1687177680406-30a7e50d1f24?q=80&w=1935&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D);
-  background-size:cover;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
