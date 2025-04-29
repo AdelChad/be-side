@@ -1,13 +1,22 @@
 <script setup lang="ts">
-  import { RouterLink, RouterView } from 'vue-router'
+  import { useRouter, RouterLink, RouterView } from 'vue-router'
   import HelloWorld from './components/HelloWorld.vue'
+  import Footer from '@/components/Footer.vue';
+  
+  const router = useRouter();
 </script>
 
 <template>
-  <RouterView />
+  <div class="app-container">
+    <div class="content">
+      <RouterView />
+    </div>
+    <Footer />
+  </div>
 </template>
-
+  
 <style scoped>
+
   header {
     line-height: 1.5;
   }
@@ -41,6 +50,23 @@
   nav a:first-of-type {
     border: 0;
   }
+  
+  .app-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .content {
+    flex: 1;
+  }
+
+  .footer {
+    background-color: #181818;
+    color: white;
+    padding: 40px 20px;
+    width: 100%;
+  }
 
   @media (min-width: 1024px) {
     header {
@@ -67,4 +93,5 @@
       margin-top: 1rem;
     }
   }
+  
 </style>

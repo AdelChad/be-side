@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
+import { isAuthenticated } from './guards'
 import MultiStepView from '../views/MultiStepView.vue'
+
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -8,7 +10,8 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: HomeView
+      component: HomeView,
+      meta: { requiresAuth: true },
     },
     {
       path: '/login',
@@ -21,6 +24,11 @@ const router = createRouter({
       component: () => import('../views/AuthView.vue')
     },
     {
+      path: '/profile',
+      name: 'Profile',
+      component: () => import('../views/ProfileView.vue'),
+      meta: { requiresAuth: true },
+    }
       path: '/about',
       name: 'about',
       // route level code-splitting
@@ -34,6 +42,13 @@ const router = createRouter({
       component: MultiStepView
     },
   ]
+})
+router.beforeEach((to, from, next) => {
+  if (to.meta.requiresAuth && !isAuthenticated()) {
+    next({ name: 'Login' })
+  } else {
+    next()
+  }
 })
 
 export default router

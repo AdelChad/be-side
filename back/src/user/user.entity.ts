@@ -36,7 +36,7 @@ export class User {
     email: string
 
     @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-    dateJoined: Date
+    dateJoined: Date;
 
     @Column({ type: 'enum', enum: Role, default: Role.User })
     role: Role;
