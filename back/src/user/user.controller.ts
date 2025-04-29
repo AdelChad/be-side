@@ -31,6 +31,16 @@ export class UserController {
 
     @UseGuards(AuthGuard)
     @Roles(['user'])
+    @Post('get_restaurant_fav')
+    async getFavoriteActivites(@Req() request): Promise<Activities[]> {
+        const userRequest: UserRequest = request.user
+        const user = await this.userService.findOne(userRequest.email)
+    
+        return this.userService.getActivitiesFav(user);
+    }
+
+    @UseGuards(AuthGuard)
+    @Roles(['user'])
     @Post('add_activite_fav')
     async addFavoriteActivities(@Body() activitie: Activities, @Req() request): Promise<void> {
         const id: number = activitie.id
@@ -49,6 +59,16 @@ export class UserController {
         const user = await this.userService.findOne(userRequest.email);
 
         return this.userService.removeActivitiFav(id, user);
+    }
+
+    @UseGuards(AuthGuard)
+    @Roles(['user'])
+    @Post('get_restaurant_fav')
+    async getFavoriteRestaurants(@Req() request): Promise<Restaurant[]> {
+        const userRequest: UserRequest = request.user
+        const user = await this.userService.findOne(userRequest.email)
+    
+        return this.userService.getRestauFav(user);
     }
 
     @UseGuards(AuthGuard)
