@@ -41,6 +41,16 @@ export class ActivitiesController {
 
     @UseGuards(AuthGuard)
     @Roles(['user'])
+    @Get("carrousel")
+    async activitiesForCarrousel(@Req() request): Promise<Array<Activities> | HttpException> {
+        const userRequest: UserRequest = request.user
+        const user = await this.userService.findOne(userRequest.email)
+
+        return this.activitiesService.activitiesMainCity(user);
+    }
+
+    @UseGuards(AuthGuard)
+    @Roles(['user'])
     @Get(":id")
     async findOneActivities(@Param('id', ParseIntPipe) id: number): Promise<Activities | HttpException> {
         let activities = await this.activitiesService.activitiesRepository.findOne({ where: { id: id }, relations: { categActiv: true } })

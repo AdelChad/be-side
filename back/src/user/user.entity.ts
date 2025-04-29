@@ -1,8 +1,10 @@
+import { Activities } from 'src/activities/activities.entity';
 import { Role } from 'src/enum/role.enum';
 import { Groupe } from 'src/groupe/groupe.entity';
 import { Message } from 'src/message/message.entity';
 import { Planning } from 'src/planning/planning.entity';
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany } from 'typeorm';
+import { Restaurant } from 'src/restaurant/restaurant.entity';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany, JoinTable } from 'typeorm';
 
 @Entity()
 export class User {
@@ -36,7 +38,6 @@ export class User {
     @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     dateJoined: Date;
 
-
     @Column({ type: 'enum', enum: Role, default: Role.User })
     role: Role;
 
@@ -54,4 +55,12 @@ export class User {
 
     @OneToMany(() => Message, message => message.author)
     messages: Message[];
+
+    @ManyToMany(() => Activities, activitie => activitie.favorits, { cascade: true })
+    @JoinTable()
+    favoritsActivities: Activities[];
+
+    @ManyToMany(() => Restaurant, restaurant => restaurant.favorits, { cascade: true })
+    @JoinTable()
+    favoritsRestaurants: Restaurant[];
 }

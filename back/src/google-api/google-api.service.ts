@@ -7,6 +7,7 @@ import { CategActiv } from "src/categ_activ/categ_activ.entity";
 import { In, Repository } from "typeorm";
 import { GoogleFunction } from "src/utils/Google";
 import { Restaurant } from "src/restaurant/restaurant.entity";
+import { CategRestau } from "src/categ_restau/categ_restau.entity";
 
 require('dotenv').config();
 
@@ -17,6 +18,9 @@ export class GoogleApiService {
 
         @InjectRepository(CategActiv)
         public categsRepository: Repository<CategActiv>,
+
+        @InjectRepository(CategRestau)
+        public categsResRepository: Repository<CategRestau>,
 
         @InjectRepository(Activities)
         public activitiesRepository: Repository<Activities>,
@@ -77,6 +81,20 @@ export class GoogleApiService {
         this.googleFunction.insertCategs()
     }
     
+    private async getFirstPhoto(placeId: string): Promise<string | null> {
+        try {
+            const response = await fetch(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&key=${process.env.API_KEY_GOOGLE.toString()}&fields=photos`);
+            const result = await response.json();
+
+            if (response.ok && result.result.photos?.length) {
+                const photoReference = result.result.photos[0].photo_reference;
+                return `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${photoReference}&key=${process.env.API_KEY_GOOGLE.toString()}`;
+            }
+        } catch (error) {
+            console.log(`Error fetching photo for place ${placeId}:`, error);
+        }
+        return null;
+    }
     
     private async createActivitiesWhatWeDo(result, type: string) {
         for (let place of result.results) {
@@ -124,11 +142,11 @@ export class GoogleApiService {
                         const tagName = this.googleFunction.getTagFr(type)
                         const daytime = this.googleFunction.getPeriods(type)
                         const spaceType = this.googleFunction.getPlace(type)
-                        const categActivite = await this.categsRepository.findBy({ name: tagName.name })
-                        
+                        const categActivite = await this.categsResRepository.findBy({ name: tagName.name })
+                    
 
-                        let activities = new Activities()
-
+                        let activities = new Restaurant()
+                        const photoUrl = await this.getFirstPhoto(place.place_id);
                         activities.name = result.result.name
                         activities.rating = result.result.rating
                         activities.phoneNumber = result.result.formatted_phone_number
@@ -142,13 +160,10 @@ export class GoogleApiService {
                         activities.city = city
                         activities.country = country
                         activities.price = ''
-                        activities.categActiv = categActivite
+                        activities.categRestau = categActivite
                         activities.googleId = place.place_id
-
-
+                        activities.photo = photoUrl || ''
                         await activities.save()
-
-
                     }
                 
                 } catch(e){
