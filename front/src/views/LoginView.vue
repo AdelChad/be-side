@@ -1,4 +1,4 @@
-<template>
+<template> 
   <div class="centered-container">
     <div class="banner-container"></div>
     <!-- Formulaire -->
@@ -101,34 +101,27 @@
 </script>
 
 <style scoped>
-  /* Container principal avec flex */
+
   .centered-container {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100vw;
     height: 100vh;
-    overflow: hidden;
   }
 
   .banner-container {
     background-image: url('../assets/banner.svg');
     background-size: cover;
     width: 60vw;
-    height: 100vh;
   }
 
-  /* Conteneur du formulaire */
   .form-container {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     width: 40%;
-    padding: 70px;
+    padding: 50px;
   }
 
-  /* Titre */
   .display-4 {
     font-family: 'Montserrat', sans-serif;
     font-weight: 600;
@@ -138,7 +131,6 @@
     color: #121212;
   }
 
-  /* Texte sous-titre */
   .text-muted {
     font-family: 'Inter', sans-serif;
     font-size: 14px;
@@ -146,7 +138,6 @@
     color: #3d3d3d;
   }
 
-  /* Labels */
   .fw-medium {
     font-family: 'Inter', sans-serif;
     font-weight: 500;
@@ -155,7 +146,6 @@
     color: #121212;
   }
 
-  /* Inputs */
   .form-control {
     box-sizing: border-box;
     padding: 14px 16px;
@@ -167,7 +157,6 @@
     color: #6b6b6b;
   }
 
-  /* Bouton */
   .btn-primary {
     padding: 12px;
     font-size: 16px;
@@ -179,7 +168,6 @@
     background-color: #121212;
   }
 
-  /* Lien */
   .text-decoration-none {
     font-size: 14px;
     color: #3d3d3d;
@@ -193,27 +181,28 @@
 
   .error-message {
     color: red;
-    font-size: 12px;
+    font-size: 16px;
     margin-top: -10px;
     margin-bottom: 10px;
   }
-  /* Responsive : ajuster le layout sur petits écrans */
+
   @media (max-width: 768px) {
     .centered-container {
-      flex-direction: column; /* Empiler l'image et le formulaire verticalement sur les petits écrans */
+      flex-direction: column;
       justify-content: flex-start;
       align-items: center;
     }
 
     .banner-container,
     .form-container {
-      min-width: 100%; /* Les deux éléments prennent toute la largeur */
-      height: auto; /* Ajuster la taille de l'image sur les petits écrans */
+      min-width: 100%;
+      height: auto;
     }
 
     .form-container {
       max-width: 100%;
-      margin-top: 20px; /* Ajouter un peu d'espace au-dessus du formulaire */
+      margin-top: 20px;
+      padding: 50px 20px;
     }
   }
 </style>

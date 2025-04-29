@@ -29,4 +29,7 @@ export class UserCreateDto {
     @IsString()
     country: string;
 
+    @IsString()
+    profilePicture?: string;
+
 }

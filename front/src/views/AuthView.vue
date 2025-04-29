@@ -244,27 +244,12 @@
 <style scoped>
   .centered-container {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
   }
 
   .banner-container {
     background-image: url('../assets/photoSignup.avif');
     background-size: cover;
     width: 60vw;
-    height: 100vh;
-  }
-
-  .form-control {
-    height: 30px;
-    border: 1px solid #ededed;
-    border-radius: 4px;
-    font-family: 'Inter', sans-serif;
-    font-size: 13px;
-    color: #6b6b6b;
   }
 
   .form-container {
@@ -273,7 +258,18 @@
     justify-content: center;
     align-items: center;
     width: 60%;
-    padding: 100px 80px; /* Augmente le padding en haut et en bas */
+    padding: 70px
+    }
+
+  .form-control {
+    box-sizing: border-box;
+    padding: 14px 16px;
+    height: 30px;
+    border: 1px solid #ededed;
+    border-radius: 4px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    color: #6b6b6b;
   }
 
   .display-4 {
@@ -284,7 +280,6 @@
     color: #121212;
   }
 
-  /* Texte sous-titre */
   .text-muted {
     font-family: 'Inter', sans-serif;
     font-size: 13px;
@@ -320,20 +315,22 @@
 
   @media (max-width: 768px) {
     .centered-container {
-      flex-direction: column; /* Empiler l'image et le formulaire verticalement sur les petits écrans */
+      flex-direction: column;
       justify-content: flex-start;
       align-items: center;
     }
 
-    .banner-container,
-    .form-container {
-      min-width: 100%; /* Les deux éléments prennent toute la largeur */
-      height: auto; /* Ajuster la taille de l'image sur les petits écrans */
+    .form-container,
+    .banner-container{
+      min-width: 100%;
+      height: auto;
     }
 
     .form-container {
       max-width: 100%;
-      margin-top: 20px; /* Ajouter un peu d'espace au-dessus du formulaire */
+      margin-top: 20px;
+      padding: 50px 20px;
     }
   }
 </style>
+

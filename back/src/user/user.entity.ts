@@ -33,11 +33,15 @@ export class User {
     @Column({ unique: true })
     email: string
 
-    @Column()
-    dateJoined: Date
+    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+    dateJoined: Date;
+
 
     @Column({ type: 'enum', enum: Role, default: Role.User })
     role: Role;
+
+    @Column({ nullable: true })
+    profilePicture: string;
 
     @OneToMany(() => Planning, planning => planning.user)
     planning: Planning[]
