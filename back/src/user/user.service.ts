@@ -110,6 +110,20 @@ export class UserService {
     return this.userRepository.save(user);
   }
 
+    async getActivitiesFav(user: User): Promise<Activities[]> {
+        if (!user) {
+            throw new BadRequestException('User must be provided');
+        }
+    
+        const favorites = user.favoritsActivities ?? [];
+    
+        if (favorites.length === 0) {
+            throw new NotFoundException('No favorite activities found for this user');
+        }
+    
+        return favorites;
+    }
+
     async addActivitiFav(activityId: number, user: User) {
         const activity = await this.activitiesRepository.findOne({ where: { id: activityId } });
         if (!activity) throw new NotFoundException("Activity not found");
@@ -141,6 +155,20 @@ export class UserService {
     
         fullUser.favoritsActivities = fullUser.favoritsActivities.filter(fav => fav.id !== activity.id);
         await this.userRepository.save(fullUser);
+    }
+
+    async getRestauFav(user: User): Promise<Restaurant[]> {
+        if (!user) {
+            throw new BadRequestException('User must be provided');
+        }
+    
+        const favorites = user.favoritsRestaurants ?? [];
+    
+        if (favorites.length === 0) {
+            throw new NotFoundException('No favorite activities found for this user');
+        }
+    
+        return favorites;
     }
 
     async addRestauFav(restaurantId: number, user: User) {
