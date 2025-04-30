@@ -90,6 +90,10 @@
         </div>
         <p v-if="errorMessageAuth" class="error-message">{{ errorMessageAuth }}</p>
         <button type="submit" class="btn btn-primary">S'inscrire</button>
+        <div class="text-center mt-3">
+        <p class="mb-1">Vous avez déjà un compte ?</p>
+          <router-link to="/login" class="text-primary fw-bold">Se connecter !</router-link>
+        </div>
       </form>
     </div>
     <div class="banner-container"></div>
