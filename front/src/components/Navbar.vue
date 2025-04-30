@@ -13,9 +13,20 @@
   <div class="right">
    <a class="btn" href="">Se connecter</a>
    <a class="btn" href="">Créer un compte</a>
+   <a class="btn" @click="logout">Se déconnecter</a>
+
   </div>
 </nav>
 </template>
+<script  setup lang="ts">
+import router from '@/router';
+
+
+function logout() {
+    localStorage.removeItem('access_token')
+    router.push({ name: 'Login' })
+  }
+</script>
 
 <style scoped>
 .navbar {
