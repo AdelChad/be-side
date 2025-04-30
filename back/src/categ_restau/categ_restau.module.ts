@@ -11,4 +11,4 @@ import { Restaurant } from 'src/restaurant/restaurant.entity';
   controllers: [CategRestauController],
   providers: [CategRestautService],
 })
-export class CategModule { }
+export class CategRestauModule { }
