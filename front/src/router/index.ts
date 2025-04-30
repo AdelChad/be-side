@@ -28,21 +28,15 @@ const router = createRouter({
       name: 'Profile',
       component: () => import('../views/ProfileView.vue'),
       meta: { requiresAuth: true },
-    }
-      path: '/about',
-      name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/AboutView.vue')
     },
     {
       path: '/multistep',
       name: 'MultiStep',
-      component: MultiStepView
+      component: MultiStepView,
     },
   ]
 })
+
 router.beforeEach((to, from, next) => {
   if (to.meta.requiresAuth && !isAuthenticated()) {
     next({ name: 'Login' })
