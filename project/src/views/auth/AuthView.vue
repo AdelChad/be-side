@@ -280,7 +280,7 @@ const createUserForm = async (e: Event) => {
             
             <div class="login-link">
               <p>Vous avez déjà un compte ?</p>
-              <a href="/login" class="text-link">Se connecter</a>
+              <router-link to="/login" class="text-link">Se connecter !</router-link>
             </div>
           </form>
         </div>
