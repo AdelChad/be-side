@@ -1,5 +1,5 @@
 import { Type } from "class-transformer";
-import { IsDate, IsEmail, IsNotEmpty, IsString, } from "class-validator";
+import { IsDate, IsEmail, IsNotEmpty, IsOptional, IsString, } from "class-validator";
 
 export class UserCreateDto {
 
@@ -30,6 +30,7 @@ export class UserCreateDto {
     country: string;
 
     @IsString()
+    @IsOptional()
     profilePicture?: string;
 
 }
