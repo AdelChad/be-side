@@ -1,11 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/auth/LoginView.vue'
-import SignupView from '../views/auth/LoginView.vue'
 import SearchView from '../views/search/SearchView.vue'
 import SearchResultsView from '../views/search/SearchResultsView.vue'
 import ActivityDetailView from '../views/activities/ActivityDetailView.vue'
 import NotFoundView from '../views/NotFoundView.vue'
+import { isAuthenticated } from './guards'
+import AuthView from '../views/auth/AuthView.vue'
+import ProfileView from '../views/ProfileView.vue'
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -13,7 +15,8 @@ const router = createRouter({
         {
             path: '/',
             name: 'home',
-            component: HomeView
+            component: HomeView,
+            meta: { requiresAuth: true }
         },
         {
             path: '/login',
@@ -23,7 +26,7 @@ const router = createRouter({
         {
             path: '/signup',
             name: 'signup',
-            component: SignupView
+            component: AuthView
         },
         {
             path: '/search',
@@ -31,14 +34,22 @@ const router = createRouter({
             component: SearchView
         },
         {
+            path: '/profile',
+            name: 'profil',
+            component: ProfileView,
+            meta: { requiresAuth: true }
+        },
+        {
             path: '/search/results',
             name: 'search-results',
-            component: SearchResultsView
+            component: SearchResultsView,
+            meta: { requiresAuth: true }
         },
         {
             path: '/activities/:id',
             name: 'activity-detail',
-            component: ActivityDetailView
+            component: ActivityDetailView,
+            meta: { requiresAuth: true }
         },
         {
             path: '/:pathMatch(.*)*',
@@ -46,13 +57,21 @@ const router = createRouter({
             component: NotFoundView
         }
     ],
-    
+
     scrollBehavior(to, from, savedPosition) {
         if (savedPosition) {
             return savedPosition
         } else {
             return { top: 0 }
         }
+    }
+})
+
+router.beforeEach((to, from, next) => {
+    if (to.meta.requiresAuth && !isAuthenticated()) {
+        next({ name: 'login' })
+    } else {
+        next()
     }
 })
 
