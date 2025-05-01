@@ -9,12 +9,12 @@ interface User {
 
 export const useAuthStore = defineStore('auth', () => {
     const user = ref<User | null>(null)
-    const token = ref<string | null>(null)
+    const token = ref<string>(localStorage.getItem('access_token') || '')
 
     if (typeof window !== 'undefined') {
         const savedUser = localStorage.getItem('user')
-        const savedToken = localStorage.getItem('token')
-        
+        const savedToken = localStorage.getItem('access_token')
+
         if (savedUser) user.value = JSON.parse(savedUser)
         if (savedToken) token.value = savedToken
     }
@@ -28,29 +28,29 @@ export const useAuthStore = defineStore('auth', () => {
 
     function setToken(newToken: string) {
         token.value = newToken
-        localStorage.setItem('token', newToken)
+        localStorage.setItem('access_token', newToken)
     }
 
     async function login(email: string, password: string) {
         const mockUser = {
-        id: '123',
-        email,
-        name: 'Demo User'
+            id: '123',
+            email,
+            name: 'Demo User'
         }
-        
+
         const mockToken = 'mock-jwt-token'
-        
+
         setUser(mockUser)
         setToken(mockToken)
-        
+
         return mockUser
     }
 
     function logout() {
         user.value = null
-        token.value = null
+        token.value = ''
         localStorage.removeItem('user')
-        localStorage.removeItem('token')
+        localStorage.removeItem('access_token')
     }
 
     return {
