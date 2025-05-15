@@ -69,7 +69,7 @@ import { Restaurant } from 'src/restaurant/restaurant.entity';
   
     @UseGuards(AuthGuard)
     @Roles(['user'])
-    @Post('get_restaurant_fav')
+    @Get('get_activities_fav')
     async getFavoriteActivites(@Req() request): Promise<Activities[]> {
         const userRequest: UserRequest = request.user
         const user = await this.userService.findOne(userRequest.email)
@@ -79,7 +79,7 @@ import { Restaurant } from 'src/restaurant/restaurant.entity';
 
     @UseGuards(AuthGuard)
     @Roles(['user'])
-    @Post('add_activite_fav')
+    @Post('add_activitie_fav')
     async addFavoriteActivities(@Body() activitie: Activities, @Req() request): Promise<void> {
         const id: number = activitie.id
         const userRequest: UserRequest = request.user
@@ -90,7 +90,7 @@ import { Restaurant } from 'src/restaurant/restaurant.entity';
 
     @UseGuards(AuthGuard)
     @Roles(['user'])
-    @Post('remove_activite_fav')
+    @Post('remove_activitie_fav')
     async removeFavoriteActivity(@Body() activitie: Activities, @Req() request): Promise<void> {
         const id: number = activitie.id;
         const userRequest: UserRequest = request.user;
@@ -101,7 +101,7 @@ import { Restaurant } from 'src/restaurant/restaurant.entity';
 
     @UseGuards(AuthGuard)
     @Roles(['user'])
-    @Post('get_restaurant_fav')
+    @Get('get_restaurants_fav')
     async getFavoriteRestaurants(@Req() request): Promise<Restaurant[]> {
         const userRequest: UserRequest = request.user
         const user = await this.userService.findOne(userRequest.email)
@@ -122,7 +122,7 @@ import { Restaurant } from 'src/restaurant/restaurant.entity';
 
     @UseGuards(AuthGuard)
     @Roles(['user'])
-    @Post('remove_activite_fav')
+    @Post('remove_restaurant_fav')
     async removeFavoriteRestaurant(@Body() restaurant: Restaurant, @Req() request): Promise<void> {
         const id: number = restaurant.id
         const userRequest: UserRequest = request.user
