@@ -18,7 +18,7 @@ export class UserService {
         @InjectRepository(Activities)
         public activitiesRepository: Repository<Activities>,
 
-        @InjectRepository(Activities)
+        @InjectRepository(Restaurant)
         public restaurantsRepository: Repository<Restaurant>,
     ) {}
 
@@ -110,97 +110,105 @@ export class UserService {
     return this.userRepository.save(user);
   }
 
-    async getActivitiesFav(user: User): Promise<Activities[]> {
-        if (!user) {
-            throw new BadRequestException('User must be provided');
-        }
+  async getActivitiesFav(user: User): Promise<Activities[]> {
+    const fullUser = await this.userRepository.findOne({ 
+      where: { id: user.id }, 
+      relations: ['favoritsActivities'] 
+    });
+    if (!user) {
+        throw new BadRequestException('User must be provided');
+    }
+  
+    const favorites = fullUser.favoritsActivities ?? [];
+  
+    if (favorites.length === 0) {
+      throw new NotFoundException('No favorite activities found for this user');
+    }
+  
+    return favorites;
+  }
+
+  async addActivitiFav(activityId: number, user: User) {
+    const activity = await this.activitiesRepository.findOne({ where: { id: activityId } });
+    if (!activity) throw new NotFoundException("Activity not found");
     
-        const favorites = user.favoritsActivities ?? [];
+    const fullUser = await this.userRepository.findOne({
+      where: { id: user.id },
+      relations: ['favoritsActivities'],
+    });
     
-        if (favorites.length === 0) {
-            throw new NotFoundException('No favorite activities found for this user');
-        }
-    
-        return favorites;
+    const isAlreadyFavorite = fullUser.favoritsActivities.find(fav => fav.id === activity.id);
+    if (!isAlreadyFavorite) {
+      fullUser.favoritsActivities.push(activity);
+      await this.userRepository.save(fullUser);
+    }
+  }
+
+  async removeActivitiFav(activityId: number, user: User) {
+    const activity = await this.activitiesRepository.findOne({ where: { id: activityId } });
+    if (!activity) throw new NotFoundException("Activity not found");
+
+    const fullUser = await this.userRepository.findOne({ 
+      where: { id: user.id }, 
+      relations: ['favoritsActivities'] 
+    });
+    if (!fullUser) throw new NotFoundException("User not found");
+
+    const isFavorite = fullUser.favoritsActivities.some(fav => fav.id === activity.id);
+    if (!isFavorite) throw new BadRequestException("Activity is not in user's favorites");
+
+    fullUser.favoritsActivities = fullUser.favoritsActivities.filter(fav => fav.id !== activity.id);
+    await this.userRepository.save(fullUser);
+  }
+
+  async getRestauFav(user: User): Promise<Restaurant[]> {
+    const fullUser = await this.userRepository.findOne({ 
+      where: { id: user.id }, 
+      relations: ['favoritsRestaurants'] 
+    });
+    if (!user) {
+      throw new BadRequestException('User must be provided');
     }
 
-    async addActivitiFav(activityId: number, user: User) {
-        const activity = await this.activitiesRepository.findOne({ where: { id: activityId } });
-        if (!activity) throw new NotFoundException("Activity not found");
-        
-        const fullUser = await this.userRepository.findOne({
-            where: { id: user.id },
-            relations: ['favoritsActivities'],
-        });
-        
-        const isAlreadyFavorite = fullUser.favoritsActivities.find(fav => fav.id === activity.id);
-        if (!isAlreadyFavorite) {
-            fullUser.favoritsActivities.push(activity);
-            await this.userRepository.save(fullUser);
-        }
+    const favorites = fullUser.favoritsRestaurants ?? [];
+
+    if (favorites.length === 0) {
+      throw new NotFoundException('No favorite Restaurants found for this user');
     }
 
-    async removeActivitiFav(activityId: number, user: User) {
-        const activity = await this.activitiesRepository.findOne({ where: { id: activityId } });
-        if (!activity) throw new NotFoundException("Activity not found");
-    
-        const fullUser = await this.userRepository.findOne({ 
-            where: { id: user.id }, 
-            relations: ['favoritsActivities'] 
-        });
-        if (!fullUser) throw new NotFoundException("User not found");
-    
-        const isFavorite = fullUser.favoritsActivities.some(fav => fav.id === activity.id);
-        if (!isFavorite) throw new BadRequestException("Activity is not in user's favorites");
-    
-        fullUser.favoritsActivities = fullUser.favoritsActivities.filter(fav => fav.id !== activity.id);
-        await this.userRepository.save(fullUser);
-    }
+    return favorites;
+  }
 
-    async getRestauFav(user: User): Promise<Restaurant[]> {
-        if (!user) {
-            throw new BadRequestException('User must be provided');
-        }
-    
-        const favorites = user.favoritsRestaurants ?? [];
-    
-        if (favorites.length === 0) {
-            throw new NotFoundException('No favorite activities found for this user');
-        }
-    
-        return favorites;
-    }
+  async addRestauFav(restaurantId: number, user: User) {
+    const restaurant = await this.restaurantsRepository.findOne({ where: { id: restaurantId } });
+    if (!restaurant) throw new NotFoundException("Restaurant not found");
 
-    async addRestauFav(restaurantId: number, user: User) {
-        const restaurant = await this.restaurantsRepository.findOne({ where: { id: restaurantId } });
-        if (!restaurant) throw new NotFoundException("Activity not found");
+    const fullUser = await this.userRepository.findOne({
+      where: { id: user.id },
+      relations: ['favoritsRestaurants'],
+    });
 
-        const fullUser = await this.userRepository.findOne({
-            where: { id: user.id },
-            relations: ['favoritsActivities'],
-        });
-    
-        const isAlreadyFavorite = fullUser.favoritsActivities.find(fav => fav.id === restaurant.id);
-        if (!user.favoritsRestaurants.some(fav => fav.id === restaurant.id)) {
-            user.favoritsRestaurants.push(restaurant);
-            await this.userRepository.save(user);
-        }
+    const isAlreadyFavorite = fullUser.favoritsRestaurants.find(fav => fav.id === restaurant.id);
+    if (!isAlreadyFavorite) {
+      fullUser.favoritsRestaurants.push(restaurant);
+      await this.userRepository.save(fullUser);
     }
+  }
 
-    async removeRestaurantFav(restaurantId: number, user: User) {
-        const restaurant = await this.restaurantsRepository.findOne({ where: { id: restaurantId } });
-        if (!restaurant) throw new NotFoundException("Restaurant not found");
-    
-        const fullUser = await this.userRepository.findOne({ 
-            where: { id: user.id }, 
-            relations: ['favoritsActivities'] 
-        });
-        if (!fullUser) throw new NotFoundException("User not found");
-    
-        const isFavorite = fullUser.favoritsRestaurants.some(fav => fav.id === restaurant.id);
-        if (!isFavorite) throw new BadRequestException("Restaurant is not in user's favorites");
-    
-        fullUser.favoritsRestaurants = fullUser.favoritsRestaurants.filter(fav => fav.id !== restaurant.id);
-        await this.userRepository.save(fullUser);
-    }
+  async removeRestaurantFav(restaurantId: number, user: User) {
+    const restaurant = await this.restaurantsRepository.findOne({ where: { id: restaurantId } });
+    if (!restaurant) throw new NotFoundException("Restaurant not found");
+
+    const fullUser = await this.userRepository.findOne({ 
+      where: { id: user.id }, 
+      relations: ['favoritsRestaurants'] 
+    });
+    if (!fullUser) throw new NotFoundException("User not found");
+
+    const isFavorite = fullUser.favoritsRestaurants.find(fav => fav.id === restaurant.id);
+    if (!isFavorite) throw new BadRequestException("Restaurant is not in user's favorites");
+
+    fullUser.favoritsRestaurants = fullUser.favoritsRestaurants.filter(fav => fav.id !== restaurant.id);
+    await this.userRepository.save(fullUser);
+  }
 }
