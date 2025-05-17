@@ -1,25 +1,40 @@
 <script setup lang="ts">
-    import { ref } from 'vue'
+import { computed, onMounted } from 'vue'
+import { useFavoritesStore } from '../../stores/fav';
+import { useUserStore } from '../../stores/user';
 
-    const props = defineProps<{
-        activity: {
-            id: string
-            name: string
-            photo: string
-            country: string
-            address: string
-            city: string
-            rating: number
-            phoneNumber: string 
-            type: 'activity' | 'restaurant'
-        }
-    }>()
+const props = defineProps<{
+  activity: {
+    id: number
+    name: string
+    photo: string
+    country: string
+    address: string
+    city: string
+    rating: number
+    phoneNumber: string
+    type: 'activity' | 'restaurant'
+  }
+}>()
 
-    const isFavorite = ref(false)
+const store = useUserStore()
+const favoritesStore = useFavoritesStore()
 
-    function toggleFavorite() {
-        isFavorite.value = !isFavorite.value
-    }
+const isFavorite = computed(() => 
+  store.isFavorite(props.activity.id, props.activity.type)
+)
+
+function toggleFavorite() {
+  favoritesStore.toggleFavorite(props.activity)
+}
+
+onMounted(async () => {
+  await store.fetchCurrentUser()
+  await Promise.all([
+    store.fetchFavoriteActivities(),
+    store.fetchFavoriteRestaurants()
+  ])
+})
 </script>
 
 <template>
