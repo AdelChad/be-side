@@ -42,8 +42,10 @@
                 errorMessageLogin.value = 'Veuillez completer le formulaire'
             } else if (response.status === 401 || 404) {
                 errorMessageLogin.value = 'Email ou mot de passe incorrect.'
+                router.push('/login')
             } else {
                 errorMessageLogin.value = "Une erreur s'est produite lors de la connexion."
+                router.push('/login')
             }
         } catch (err) {
             if (err instanceof Error) {
@@ -53,7 +55,10 @@
             }
             console.error(err)
             errorMessageLogin.value = "Une erreur s'est produite lors de la connexion."
-        }
+            router.push('/login')
+        }finally {
+        isSubmitting.value = false
+    }
     }
 </script>
 

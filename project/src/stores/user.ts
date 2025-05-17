@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { User } from '../interfaces/User.interface'
+import router from '../router'
 
 interface FavoriteItem {
     id: number
@@ -31,6 +32,12 @@ export const useUserStore = defineStore('user', () => {
                     Authorization: `Bearer ${localStorage.getItem('access_token')}`
                 }
             })
+
+            if (response.status === 401) {
+                localStorage.removeItem('access_token')
+                router.push('/login')
+                return
+            }
             if (!response.ok) throw new Error(`HTTP error: ${response.status}`)
             user.value = await response.json()
         } catch (error) {
