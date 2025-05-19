@@ -6,6 +6,7 @@ import { AuthGuard } from 'src/guard/auth.guard';
 import { GroupeCreateDto } from './dto/groupe-create.dto';
 import { UserRequest } from 'src/interface/user-request.interface';
 import { UserService } from 'src/user/user.service';
+import { groupeUserDto } from './dto/groupe-user.dto';
 
 @Controller('groupe')
 export class GroupeController {
@@ -19,5 +20,25 @@ export class GroupeController {
         const user = await this.userService.findOne(userRequest.email)
 
         return this.groupeService.createGroupe(groupeCreateDto, user)
+    }
+
+    @UseGuards(AuthGuard)
+    @Roles(['user'])
+    @Post('add-user')
+    async addUser(@Body() addUserDto: groupeUserDto, @Req() request): Promise<Groupe> {
+        const userRequest: UserRequest = request.user
+        const user = await this.userService.findOne(userRequest.email)
+
+        return this.groupeService.addUser(addUserDto)
+    }
+
+    @UseGuards(AuthGuard)
+    @Roles(['user'])
+    @Post('remove-user')
+    async removeUser(@Body() removeUserDto: groupeUserDto, @Req() request): Promise<Groupe> {
+        const userRequest: UserRequest = request.user
+        const user = await this.userService.findOne(userRequest.email)
+
+        return this.groupeService.removeUser(removeUserDto, user)
     }
 }
