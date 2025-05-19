@@ -29,7 +29,12 @@ export const useFavoritesStore = defineStore('favorites', () => {
         }
     }
 
+    async function removeFav(id: number, type: 'activity' | 'restaurant') {
+        await removeFavorite(id, type)
+        userStore.removeFavoriteLocal(id, type)
+    }
     return {
         toggleFavorite,
+        removeFav
     }
 })
