@@ -24,6 +24,7 @@ import { Roles } from 'src/decorators/role.decorator';
 import { Activities } from 'src/activities/activities.entity';
 import { UserRequest } from 'src/interface/user-request.interface';
 import { Restaurant } from 'src/restaurant/restaurant.entity';
+import { SearchActivityRestaurantDto } from './dto/generate-restaurants-pos.dto';
 
 @Controller('users')
 export class UserController {
@@ -50,6 +51,16 @@ export class UserController {
   @Get()
   findAll(): Promise<User[]> {
     return this.userService.findAll();
+  }
+
+  @UseGuards(AuthGuard)
+  @Roles(['user'])
+  @Get('search_activities_restaurant')
+  async searchActivityRestaurant(@Body() searchActivityRestaurant: SearchActivityRestaurantDto, @Req() request): Promise<Activities[] | Restaurant[]> {
+    const userRequest: UserRequest = request.user
+    const user = await this.userService.findOne(userRequest.email)
+
+    return this.userService.searchActivitiesRestaurant(searchActivityRestaurant, user);
   }
 
   @UseGuards(AuthGuard)

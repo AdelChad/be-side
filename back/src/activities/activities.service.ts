@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Like, Repository } from 'typeorm';
 import { Activities } from './activities.entity';
@@ -10,8 +10,6 @@ import { GoogleApiService } from 'src/google-api/google-api.service';
 import { CategActiv } from 'src/categ_activ/categ_activ.entity';
 import { PlanningService } from 'src/planning/planning.service';
 import { User } from 'src/user/user.entity';
-import { GenerateActivitiesPos } from './dto/generate-activities-pos.dto';
-import { GeocodeAddresse } from 'src/interface/geocodeAddresse';
 
 
 @Injectable()
@@ -88,35 +86,6 @@ export class ActivitiesService {
         }
 
         return arrayActivities;
-    }
-
-    async activitiesBySearch(searchActivitiesPos: GenerateActivitiesPos, user: User): Promise<Array<Activities>> {
-        try {
-            const { search, city, latitude, longitude } = searchActivitiesPos;
-            let array: Array<Activities> = []
-            let activities: Array<Activities> = []
-            let geocodeAddress: GeocodeAddresse
-            const cityRecovered = isEmptyString(city) ? user.city : city
-    
-            activities = await this.activitiesRepository.find({
-                where: {
-                    name: Like(`%${search}%`)
-                }
-            });
-
-            geocodeAddress = !isEmptyString(latitude) || !isEmptyString(longitude) ? { lat: latitude,long: longitude} : await this.googleApi.getAddresseGeocode(cityRecovered);
-    
-            for (const activity of activities) {
-                if (this.trigonometrie.distance(geocodeAddress, activity)) {
-                    array.push(activity);
-                }
-            }
-    
-            return array;
-    
-        } catch (error) {
-            console.error('Error fetching activities:', error);
-        }
     }
 
     async filterActivities(dto: FilterActivitiesDto, user: User): Promise<Activities[]> {

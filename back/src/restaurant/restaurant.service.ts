@@ -3,13 +3,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Like, Repository } from 'typeorm';
 import { Restaurant } from './restaurant.entity';
 import { Trigonometrie } from 'src/utils/trigonometrie';
-import { GoogleApiService } from 'src/google-api/google-api.service';
 import { CategRestau } from 'src/categ_restau/categ_restau.entity';
 import { PlanningService } from 'src/planning/planning.service';
 import { User } from 'src/user/user.entity';
 import { FilterRestaurantsDto } from './dto/filter-restaurants.dto';
-import { GenerateRestaurantsPos } from './dto/generate-restaurants-pos.dto';
-import { GeocodeAddresse } from 'src/interface/geocodeAddresse';
 
 @Injectable()
 export class RestaurantService {
@@ -21,8 +18,6 @@ export class RestaurantService {
         public categRestauRepository: Repository<CategRestau>,
 
         public trigonometrie: Trigonometrie,
-        private googleApi: GoogleApiService,
-        private planningService: PlanningService
 
     ) { }
 
@@ -51,35 +46,6 @@ export class RestaurantService {
         }
 
         return arrayRestaurant;
-    }
-
-    async RestaurantsBySearch(searchRestaurantsPos: GenerateRestaurantsPos, user: User): Promise<Array<Restaurant>> {
-        try {
-            const { search, city, latitude, longitude } = searchRestaurantsPos;
-            let array: Array<Restaurant> = []
-            let restaurants: Array<Restaurant> = []
-            let geocodeAddress: GeocodeAddresse
-            const cityRecovered = isEmptyString(city) ? user.city : city
-    
-            restaurants = await this.restaurantRepository.find({
-                where: {
-                    name: Like(`%${search}%`)
-                }
-            });
-
-            geocodeAddress = !isEmptyString(latitude) || !isEmptyString(longitude) ? { lat: latitude,long: longitude} : await this.googleApi.getAddresseGeocode(cityRecovered);
-    
-            for (const restaurant of restaurants) {
-                if (this.trigonometrie.distance(geocodeAddress, restaurant)) {
-                    array.push(restaurant);
-                }
-            }
-    
-            return array;
-    
-        } catch (error) {
-            console.error('Error fetching restaurants:', error);
-        }
     }
 
     async filterRestaurants(dto: FilterRestaurantsDto, user: User): Promise<Restaurant[]> {

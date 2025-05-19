@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 import { User } from './user.entity';
 import { Activities } from 'src/activities/activities.entity';
 import { Restaurant } from 'src/restaurant/restaurant.entity';
@@ -8,6 +8,9 @@ import * as bcrypt from 'bcrypt';
 import { UserCreateDto } from './dto/create-user.dto';
 import * as path from 'path';
 import * as fs from 'fs';
+import { SearchActivityRestaurantDto } from './dto/generate-restaurants-pos.dto';
+import { GoogleApiService } from 'src/google-api/google-api.service';
+import { Trigonometrie } from 'src/utils/trigonometrie';
 
 @Injectable()
 export class UserService {
@@ -20,6 +23,10 @@ export class UserService {
 
         @InjectRepository(Restaurant)
         public restaurantsRepository: Repository<Restaurant>,
+
+        public trigonometrie: Trigonometrie,
+
+        public googleApi: GoogleApiService,
     ) {}
 
   findAll(): Promise<User[]> {
@@ -108,6 +115,35 @@ export class UserService {
 
     user.profilePicture = null;
     return this.userRepository.save(user);
+  }
+
+  async searchActivitiesRestaurant(searchActivityRestaurant: SearchActivityRestaurantDto, user: User): Promise<Activities[] | Restaurant[]> {
+    try {
+      const { search, city, type } = searchActivityRestaurant;
+      const cityRecovered = this.trigonometrie.isEmptyString(city) ? user.city : city;
+      const geocodeAddress = await this.googleApi.getAddresseGeocode(cityRecovered);
+  
+      if (type === 'restaurant') {
+        const restaurants = await this.restaurantsRepository.find({
+          where: { name: Like(`%${search}%`) }
+        });
+  
+        return restaurants.filter(r => this.trigonometrie.distance(geocodeAddress, r));
+      }
+  
+      if (type === 'activity') {
+        const activities = await this.activitiesRepository.find({
+          where: { name: Like(`%${search}%`) }
+        });
+  
+        return activities.filter(a => this.trigonometrie.distance(geocodeAddress, a));
+      }
+  
+      throw new BadRequestException('Type de recherche invalide');
+  
+    } catch (error) {
+      console.error('Error fetching activities or restaurants:', error);
+    }
   }
 
   async getActivitiesFav(user: User): Promise<Activities[]> {

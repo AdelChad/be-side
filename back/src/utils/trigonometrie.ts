@@ -41,4 +41,8 @@ export class Trigonometrie {
         return number * 180 / Math.PI
     }
 
+    isEmptyString(str) {
+        return typeof str === 'string' && str.trim().length === 0;
+    }
+
 }
