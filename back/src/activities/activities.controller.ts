@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, ParseIntPipe, Post, Put, Query, Req, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, ParseIntPipe, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { DeleteResult } from 'typeorm';
 import { Activities } from './activities.entity';
 import { ActivitiesService } from './activities.service';
@@ -9,7 +9,6 @@ import { Roles } from 'src/decorators/role.decorator';
 import { AuthGuard } from 'src/guard/auth.guard';
 import { UserRequest } from 'src/interface/user-request.interface';
 import { UserService } from 'src/user/user.service';
-import { GenerateActivitiesPos } from './dto/generate-activities-pos.dto';
 
 @Controller('activities')
 export class ActivitiesController {
@@ -28,16 +27,6 @@ export class ActivitiesController {
     async activitiesByCateg(@Query('categActiv') query: string): Promise<Array<Activities> | HttpException> {
         let categActivName = query.split(',')
         return this.activitiesService.activitiesByCateg(categActivName);
-    }
-
-    @UseGuards(AuthGuard)
-    @Roles(['user'])
-    @Get("search")
-    async activitiesBySearch(@Body() generateActivitiesPosDto: GenerateActivitiesPos, @Req() request): Promise<Array<Activities> | HttpException> {
-        const userRequest: UserRequest = request.user
-        const user = await this.userService.findOne(userRequest.email)
-
-        return this.activitiesService.activitiesBySearch(generateActivitiesPosDto, user);
     }
 
     @UseGuards(AuthGuard)

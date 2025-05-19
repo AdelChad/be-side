@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, ParseIntPipe, Post, Put, Query, Req, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, ParseIntPipe, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { DeleteResult } from 'typeorm';
 import { Restaurant } from './restaurant.entity';
 import { RestaurantService } from './restaurant.service';
@@ -6,7 +6,6 @@ import { Roles } from 'src/decorators/role.decorator';
 import { AuthGuard } from 'src/guard/auth.guard';
 import { UserRequest } from 'src/interface/user-request.interface';
 import { UserService } from 'src/user/user.service';
-import { GenerateRestaurantsPos } from './dto/generate-restaurants-pos.dto';
 import { FilterRestaurantsDto } from './dto/filter-restaurants.dto';
 
 @Controller('restaurants')
@@ -26,16 +25,6 @@ export class RestaurantController {
     async restaurantsByCateg(@Query('categRestau') query: string): Promise<Array<Restaurant> | HttpException> {
         let categRestauName = query.split(',')
         return this.restaurantsService.restaurantsByCateg(categRestauName);
-    }
-
-    @UseGuards(AuthGuard)
-    @Roles(['user'])
-    @Get("search")
-    async restaurantsBySearch(@Body() generateRestaurantPosDto: GenerateRestaurantsPos, @Req() request): Promise<Array<Restaurant> | HttpException> {
-        const userRequest: UserRequest = request.user
-        const user = await this.userService.findOne(userRequest.email)
-
-        return this.restaurantsService.RestaurantsBySearch(generateRestaurantPosDto, user);
     }
 
     @UseGuards(AuthGuard)
