@@ -1,29 +1,69 @@
   <script setup lang="ts">
-  import { onMounted, computed } from 'vue'
+  import { onMounted, computed, ref } from 'vue'
   import defaultPicture from '../assets/Profile_picture.jpg'
   import { useUserStore } from '../stores/user'
+  import { useFavoritesStore } from '../stores/fav'
 
   const store = useUserStore()
+  const favoritesStore = useFavoritesStore()
+
   const favoriteActivities = computed(() => store.favoriteActivities)
   const favoriteRestaurants = computed(() => store.favoriteRestaurants)
 
   const user = computed(() => store.user)
-  
+
   const defaultProfilePicture = defaultPicture
 
-  onMounted(async () => {
-  store.loading = true
-  try {
-    await store.fetchCurrentUser()
-    await Promise.all([
-      store.fetchFavoriteActivities(),
-      store.fetchFavoriteRestaurants()
-    ])
-  } finally {
-    store.loading = false
-  }
-})
+  const currentActivityPage = ref(1)
+  const itemsPerPage = 6
+  const totalActivityPages = computed(() =>
+    Math.ceil(favoriteActivities.value.length / itemsPerPage)
+  )
+  const paginatedActivities = computed(() => {
+    const start = (currentActivityPage.value - 1) * itemsPerPage
+    return favoriteActivities.value.slice(start, start + itemsPerPage)
+  })
 
+  const currentRestaurantPage = ref(1)
+  const totalRestaurantPages = computed(() =>
+    Math.ceil(favoriteRestaurants.value.length / itemsPerPage)
+  )
+  const paginatedRestaurants = computed(() => {
+    const start = (currentRestaurantPage.value - 1) * itemsPerPage
+    return favoriteRestaurants.value.slice(start, start + itemsPerPage)
+  })
+  onMounted(async () => {
+    store.loading = true
+    try {
+      await store.fetchCurrentUser()
+      await Promise.all([
+        store.fetchFavoriteActivities(),
+        store.fetchFavoriteRestaurants()
+      ])
+    } finally {
+      store.loading = false
+    }
+  })
+
+function removeFavorite(id: number, type: 'activity' | 'restaurant') {
+  favoritesStore.removeFav(id, type)
+
+  if (type === 'activity') {
+    const remainingActivities = favoriteActivities.value.length - 1
+    const maxPage = Math.ceil(remainingActivities / itemsPerPage)
+    if (currentActivityPage.value > maxPage) {
+      currentActivityPage.value = Math.max(1, maxPage)
+    }
+  }
+
+  if (type === 'restaurant') {
+    const remainingRestaurants = favoriteRestaurants.value.length - 1
+    const maxPage = Math.ceil(remainingRestaurants / itemsPerPage)
+    if (currentRestaurantPage.value > maxPage) {
+      currentRestaurantPage.value = Math.max(1, maxPage)
+    }
+  }
+}
   function formatDate(dateInput: string | Date | undefined): string {
     if (!dateInput) return 'Non renseigné'
 
@@ -46,10 +86,10 @@
   }
 
   async function deleteProfilePicture() {
-  if (confirm('Êtes-vous sûr de vouloir supprimer votre photo de profil ?')) {
-    await store.deleteProfilePicture()
+    if (confirm('Êtes-vous sûr de vouloir supprimer votre photo de profil ?')) {
+      await store.deleteProfilePicture()
+    }
   }
-}
 
 </script>
 
@@ -129,14 +169,26 @@
             </div>
             <div class="card-content">
               <div class="activities-grid" v-if="favoriteActivities.length">
-                <div v-for="activity in favoriteActivities" :key="activity.id" class="activity-item">
+                <div v-for="activity in paginatedActivities" :key="activity.id" class="activity-item">
                   <img :src="activity.photo" :alt="activity.name" class="activity-image" />
                   <div class="activity-overlay">
                     <h4>{{ activity.name }}</h4>
                   </div>
+                  <button class="heart-icon favorite-btn" @click="removeFavorite(activity.id, 'activity')">
+                    ♥
+                  </button>
                 </div>
               </div>
               <p v-else class="empty-state">Aucune activité favorite pour le moment</p>
+              <div class="pagination" v-if="totalActivityPages > 1">
+                <button @click="currentActivityPage--" :disabled="currentActivityPage === 1">
+                  Précédent
+                </button>
+                <span>Page {{ currentActivityPage }} / {{ totalActivityPages }}</span>
+                <button @click="currentActivityPage++" :disabled="currentActivityPage === totalActivityPages">
+                  Suivant
+                </button>
+              </div>
             </div>
           </div>
           <!-- Restaurants Card -->
@@ -146,14 +198,26 @@
             </div>
             <div class="card-content">
               <div class="restaurants-grid" v-if="favoriteRestaurants.length">
-                <div v-for="restaurant in favoriteRestaurants" :key="restaurant.id" class="restaurant-item">
+                <div v-for="restaurant in paginatedRestaurants" :key="restaurant.id" class="restaurant-item">
                   <img :src="restaurant.photo" :alt="restaurant.name" class="restaurant-image" />
                   <div class="restaurant-overlay">
                     <h4>{{ restaurant.name }}</h4>
                   </div>
+                  <button class="heart-icon favorite-btn" @click="removeFavorite(restaurant.id, 'restaurant')">
+                    ♥
+                  </button>
                 </div>
               </div>
               <p v-else class="empty-state">Aucun restaurant favori pour le moment</p>
+              <div class="pagination" v-if="totalRestaurantPages > 1">
+                <button @click="currentRestaurantPage--" :disabled="currentRestaurantPage === 1">
+                  Précédent
+                </button>
+                <span>Page {{ currentRestaurantPage }} / {{ totalRestaurantPages }}</span>
+                <button @click="currentRestaurantPage++" :disabled="currentRestaurantPage === totalRestaurantPages">
+                  Suivant
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -163,6 +227,55 @@
 </template>
 
 <style scoped>
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.pagination button {
+  padding: 0.5rem 1rem;
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.pagination button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+
+.heart-icon {
+  color: var(--color-error);
+  font-size: 1.25rem;
+}
+
+.favorite-btn {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  background-color: rgba(0, 0, 0, 0.5);
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2;
+  transition: background-color var(--transition-fast);
+}
+
+.favorite-btn:hover {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
 .profile-view {
   min-height: 100vh;
   background-color: var(--color-neutral-100);
@@ -412,7 +525,7 @@
 }
 
 .restaurant-overlay {
-    position: absolute;
+  position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
@@ -471,12 +584,10 @@
   }
 
   .avatar-actions {
-    flex-direction: row;
-    position: relative;
-    transform: none;
-    left: 0;
+    display: flex;
     justify-content: center;
-    margin-top: var(--space-3);
+    gap: 1rem;
+    margin-top: 0.5rem;
   }
 
   .action-button {
