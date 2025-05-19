@@ -7,6 +7,7 @@ import { GoogleApiService } from 'src/google-api/google-api.service';
 import { CategRestau } from 'src/categ_restau/categ_restau.entity';
 import { PlanningService } from 'src/planning/planning.service';
 import { User } from 'src/user/user.entity';
+import { FilterRestaurantsDto } from './dto/filter-restaurants.dto';
 import { GenerateRestaurantsPos } from './dto/generate-restaurants-pos.dto';
 import { GeocodeAddresse } from 'src/interface/geocodeAddresse';
 
@@ -80,6 +81,25 @@ export class RestaurantService {
             console.error('Error fetching restaurants:', error);
         }
     }
+
+    async filterRestaurants(dto: FilterRestaurantsDto, user: User): Promise<Restaurant[]> {
+        const { cities, tags } = dto;
+
+        const query = this.restaurantRepository.createQueryBuilder('restaurant')
+            .leftJoinAndSelect('restaurant.categRestau', 'categRestau');
+
+        if (cities && cities.length > 0) {
+            query.andWhere('restaurant.city IN (:...cities)', { cities });
+        }
+
+        if (tags && tags.length > 0) {
+            query.andWhere('categRestau.name IN (:...tags)', { tags });
+        }
+
+        const results = await query.getMany();
+        return results;
+    }
+
 
     async RestaurantsMainCity(): Promise<Array<Restaurant>> {
         try {

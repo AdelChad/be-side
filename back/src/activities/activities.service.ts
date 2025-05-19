@@ -4,6 +4,7 @@ import { Like, Repository } from 'typeorm';
 import { Activities } from './activities.entity';
 import { CreateActivityDto } from './dto/create-activity.dto';
 import { UpdateActivityDto } from './dto/update-activities.dto';
+import { FilterActivitiesDto } from './dto/filter-activities.dto';
 import { Trigonometrie } from 'src/utils/trigonometrie';
 import { GoogleApiService } from 'src/google-api/google-api.service';
 import { CategActiv } from 'src/categ_activ/categ_activ.entity';
@@ -117,6 +118,28 @@ export class ActivitiesService {
             console.error('Error fetching activities:', error);
         }
     }
+
+    async filterActivities(dto: FilterActivitiesDto, user: User): Promise<Activities[]> {
+    const { cities, tags } = dto;
+
+    const query = this.activitiesRepository
+        .createQueryBuilder('activity')
+        .leftJoinAndSelect('activity.categActiv', 'categActiv');
+
+    if (cities && cities.length > 0) {
+        query.andWhere('activity.city IN (:...cities)', { cities });
+    }
+
+    if (tags && tags.length > 0) {
+        query.andWhere('categActiv.name IN (:...tags)', { tags });
+    }
+
+    query.orderBy('activity.rating', 'DESC');
+
+    return await query.getMany();
+    }
+
+
 
     async activitiesMainCity(): Promise<Array<Activities>> {
         try {

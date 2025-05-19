@@ -17,34 +17,37 @@
         type: 'restaurant'
         selected: boolean 
     }
+    
+
 
     const activeStep = ref(0)
     const searchType = ref<'restaurant' | 'activity' | null>(null)
-    const distance = ref(50)
 
     const token = localStorage.getItem('access_token') 
     const activitiesTags = ref<activityTag[]>([])
     const restaurantsTags = ref<restaurantTag[]>([])
+  
+
 
     const steps = [
         {
         id: 'type',
         title: 'Que recherches-tu ?',
-        description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc ut leo id nisi tempus porta id nec metus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras cursus in ligula euismod fermentum.'
+        description: "Envie d’un bon repas ou d’une activité qui change du quotidien ? Démarrez votre recherche en choisissant le type de sortie qui correspond à votre humeur du moment. Une première étape pour créer une expérience à votre image !"
         },
         {
         id: 'distance',
         title: 'Jusqu\'où peut-on aller ?',
-        description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc ut leo id nisi tempus porta id nec metus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras cursus in ligula euismod fermentum.'
+        description: "Que ce soit près de chez vous ou dans une ville à découvrir, indiquez la localisation idéale pour vivre votre prochaine sortie. Nous vous guidons vers les meilleures options autour de vous."
         },
         {
         id: 'preferences',
         title: 'Des exigences ?',
-        description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc ut leo id nisi tempus porta id nec metus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras cursus in ligula euismod fermentum.'
+        description: "Pour que votre sortie soit parfaitement adaptée à vos attentes, sélectionnez les critères qui comptent le plus pour vous. Nous nous chargeons de trouver des lieux qui cochent toutes vos cases !"
         }
     ]
 
-    const cities = [
+    const cities = ref ([
         {
             id:1,
             city: 'Paris',
@@ -96,7 +99,7 @@
             city: 'Lille',
             selected : false
         }
-    ]
+    ])
 
     onMounted(async () => {
         try {
@@ -148,75 +151,93 @@
     function selectType(type: 'restaurant' | 'activity') {
         searchType.value = type
     }
+async function nextStep() {
+    // Si on est encore dans les étapes initiales, on avance simplement
+   if (activeStep.value === 0 && !searchType.value) {
+        console.error("Aucun type sélectionné.");
+        return;
+    }
 
-    async function nextStep() {
-        if (activeStep.value < steps.length - 1) {
-            activeStep.value++
-            return
+    if (activeStep.value < steps.length - 1) {
+        activeStep.value++;
+        return;
+    }
+
+    const isActivity = searchType.value === 'activity';
+
+    // Récupère les villes sélectionnées
+    const selectedCities = cities.value
+        .filter(city => city.selected)
+        .map(city => city.city);
+
+    // Récupère les tags sélectionnés selon le type
+    const selectedTags = (isActivity ? activitiesTags.value : restaurantsTags.value)
+        .filter(tag => tag.selected)
+        .map(tag => tag.name);
+
+    const requestBody = {
+        cities: selectedCities,
+        tags: selectedTags
+    };
+
+    try {
+        const endpoint = isActivity ? 'activities' : 'restaurants';
+        const response = await fetch(`http://localhost:3000/${endpoint}/filter`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(requestBody)
+        });
+
+        if (!response.ok) {
+            throw new Error(`Erreur API: ${response.statusText}`);
         }
 
-        const isActivity = searchType.value === 'activity'
-        const selectedTags = (isActivity ? activitiesTags : restaurantsTags).value
-            .filter(tag => tag.selected)
-            .map(tag => tag.name)
-            
-        if (isActivity) {
-            const body = {
-                city: 'Paris',
-                latitude: 48.8566,
-                longitude: 2.3522
-            }
-            const activitiesAPI = await fetch('http://localhost:3000/categ-activ/', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(body)
-            })
-            console.log(activitiesAPI);
-            
-        } else {
-            const body = {
-                city: 'Paris',
-                latitude: 48.8566,
-                longitude: 2.3522
-            }
-            const restaurantsAPI = await fetch('http://localhost:3000/restaurants/search', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(body)
-            })
-            console.log(restaurantsAPI);
-            
-        }
-            
+        const results = await response.json();
+        console.log('Résultats filtrés:', results);
 
+        // Redirection vers la page des résultats
         router.push({
             name: 'search-results',
             query: {
                 type: searchType.value,
-                distance: distance.value.toString(),
-                tags: selectedTags.join(',')
+                tags: selectedTags.join(','),
+                cities: selectedCities.join(',')
             }
-        })
+        });
+
+    } catch (error) {
+        console.error('Erreur lors de la récupération des résultats :', error);
     }
+}
+
+
 
     function toggleTag(tagId: number, tagType: string | void) {
         if (tagType == "activity") {
             const tag = activitiesTags.value.find(t => t.id === tagId)
             if (tag) {
                 tag.selected = !tag.selected
+                 console.log(tag)
             }
         }
-        else {
+        else if (tagType == "restaurant") {
             const tag = restaurantsTags.value.find(t => t.id === tagId)
             if (tag) {
                 tag.selected = !tag.selected
+                console.log(tag)
             }
+        }
+   
+    }
+
+    function toggleCity(cityId: number) {
+        const city = cities.value.find(c => c.id === cityId)
+        if (city) {
+            city.selected = !city.selected
+            console.log(city)
         }
     }
 </script>
@@ -237,8 +258,16 @@
                             <span v-else>{{ index + 1 }}</span>
                         </div>
                         <div class="progress-text">
-                            <h4 class="progress-title">{{ step.id === 'type' ? 'Catégorie' : step.id === 'distance' ? 'Budget' : 'Exigences' }}</h4>
-                            <p class="progress-desc">Lorem ipsum dolor sit amet, consectetur adipiscing.</p>
+                            <h4 class="progress-title">{{ step.id === 'type' ? 'Catégorie' : step.id === 'distance' ? 'Localisation' : 'Exigences' }}</h4>
+                               <p class="progress-desc">
+                                {{
+                                    step.id === 'type'
+                                    ? 'Choisissez entre une activité ou un restaurant.'
+                                    : step.id === 'distance'
+                                    ? 'Sélectionnez la localisation de votre sortie.'
+                                    : 'Précisez vos préférences pour une recherche plus ciblée.'
+                                }}
+                            </p>    
                         </div>
                     </div>
                 </div>
@@ -271,10 +300,11 @@
                         <h2 class="step-title">{{ steps[activeStep].title }}</h2>
                         <p class="step-description">{{ steps[activeStep].description }}</p>
                         <button 
-                            v-for="city in cities" 
+                            v-for="city in cities"
+                            :key="city.id" 
                             class="tag-btn"
                             :class="{ selected: city.selected }"
-                            @click="toggleTag(city.id)"
+                            @click="toggleCity(city.id)"
                         >
                             {{ city.city }}
                         </button>
@@ -503,6 +533,8 @@
     .progress-circle {
         width: 36px;
         height: 36px;
+        min-width: 36px;
+        min-height: 36px;
         border-radius: 50%;
         display: flex;
         align-items: center;

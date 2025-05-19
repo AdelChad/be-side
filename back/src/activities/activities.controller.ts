@@ -4,6 +4,7 @@ import { Activities } from './activities.entity';
 import { ActivitiesService } from './activities.service';
 import { CreateActivityDto } from './dto/create-activity.dto';
 import { UpdateActivityDto } from './dto/update-activities.dto';
+import { FilterActivitiesDto } from './dto/filter-activities.dto';
 import { Roles } from 'src/decorators/role.decorator';
 import { AuthGuard } from 'src/guard/auth.guard';
 import { UserRequest } from 'src/interface/user-request.interface';
@@ -38,6 +39,20 @@ export class ActivitiesController {
 
         return this.activitiesService.activitiesBySearch(generateActivitiesPosDto, user);
     }
+
+    @UseGuards(AuthGuard)
+    @Roles(['user'])
+    @Post('filter')
+    async filterActivities(
+        @Body() filterDto: FilterActivitiesDto,
+        @Req() request
+    ): Promise<Array<Activities> | HttpException> {
+        const userRequest: UserRequest = request.user
+        const user = await this.userService.findOne(userRequest.email)
+
+        return this.activitiesService.filterActivities(filterDto, user);
+    }
+
 
     @Get("carrousel")
     async activitiesForCarrousel(@Req() request): Promise<Array<Activities> | HttpException> {
