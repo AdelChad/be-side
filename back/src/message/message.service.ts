@@ -9,16 +9,16 @@ import { MessageCreateDto } from './dto/message-create.dto';
 export class MessageService {
     constructor(
         @InjectRepository(Message)
-            public userRepository: Repository<Message>
+            public messageRepository: Repository<Message>
         ){}
 
     async createMessage(messageCreateDto: MessageCreateDto, user: User): Promise<Message | undefined>{
 
-        const { author, content, channel } = messageCreateDto
+        const { content, channel } = messageCreateDto
 
         let message = new Message()
 
-        message.author = author
+        message.author = user
         message.channel = channel
         message.content = content;
 

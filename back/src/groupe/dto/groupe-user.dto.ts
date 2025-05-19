@@ -1,6 +1,5 @@
 import { Type } from "class-transformer";
-import { IsArray, IsNotEmpty, IsString, ValidateNested } from "class-validator";
-import { User } from "src/user/user.entity";
+import { IsArray, IsNotEmpty, IsNumber, IsString, ValidateNested } from "class-validator";
 
 class UserMinimalDto {
     @IsNotEmpty()
@@ -11,11 +10,11 @@ class UserMinimalDto {
     email: string;
 }
 
-export class GroupeCreateDto {
+export class groupeUserDto {
 
-    @IsString()
+    @IsNumber()
     @IsNotEmpty()
-    groupeName: string;
+    groupeId: number;
 
     @IsArray()
     @ValidateNested({ each: true })

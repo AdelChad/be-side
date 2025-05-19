@@ -1,13 +1,9 @@
-import { IsString } from "class-validator";
+import { IsNotEmpty, IsString } from "class-validator";
 import { Channel } from "src/channel/channel.entity";
-import { User } from "src/user/user.entity";
-
 export class MessageCreateDto {
 
     @IsString()
-    author: User;
-
-    @IsString()
+    @IsNotEmpty()
     channel: Channel;
 
     @IsString()

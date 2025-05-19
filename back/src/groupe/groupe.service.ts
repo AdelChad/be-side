@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { GroupeCreateDto } from './dto/groupe-create.dto';
 import { User } from 'src/user/user.entity';
 import { Channel } from 'src/channel/channel.entity';
+import { groupeUserDto } from './dto/groupe-user.dto';
 
 @Injectable()
 export class GroupeService {
@@ -41,6 +42,52 @@ export class GroupeService {
         await channel.save();
 
         return groupe
+    }
+
+    async addUser(addUserDto: groupeUserDto): Promise<Groupe | undefined> {
+        const { groupeId, users } = addUserDto
+
+        const groupe = await this.groupRepository.findOne({
+            where: { id: groupeId },
+            relations: ['members'],
+        });
+    
+        if (!groupe) return;
+    
+        const currentMemberIds = new Set(groupe.members.map(member => member.id));
+    
+        for (const user of users) {
+            if (!currentMemberIds.has(user.id)) {
+                const userFind = await this.userRepository.findOne({
+                    where: { id: user.id },
+                });
+                groupe.members.push(userFind);
+            }
+        }
+    
+        await groupe.save();
+    
+        return groupe;
+    }
+
+    async removeUser(removeUserDto: groupeUserDto, user: User): Promise<Groupe | undefined>{
+
+        const { groupeId, users } = removeUserDto
+
+        const groupe = await this.groupRepository.findOne({
+            where: { id: groupeId },
+            relations: ['members'],
+        });
+    
+        if (!groupe) return;
+    
+        groupe.members = groupe.members.filter(
+            member => !users.some(userToRemove => userToRemove.id === member.id)
+        );
+    
+        await groupe.save();
+    
+        return groupe;
     }
 
 }
