@@ -7,6 +7,7 @@ import { AuthGuard } from 'src/guard/auth.guard';
 import { UserRequest } from 'src/interface/user-request.interface';
 import { UserService } from 'src/user/user.service';
 import { GenerateRestaurantsPos } from './dto/generate-restaurants-pos.dto';
+import { FilterRestaurantsDto } from './dto/filter-restaurants.dto';
 
 @Controller('restaurants')
 export class RestaurantController {
@@ -36,6 +37,20 @@ export class RestaurantController {
 
         return this.restaurantsService.RestaurantsBySearch(generateRestaurantPosDto, user);
     }
+
+    @UseGuards(AuthGuard)
+    @Roles(['user'])
+    @Post('filter')
+    async filterRestaurants(
+        @Body() filterDto: FilterRestaurantsDto,
+        @Req() request
+    ): Promise<Array<Restaurant> | HttpException> {
+        const userRequest: UserRequest = request.user;
+        const user = await this.userService.findOne(userRequest.email);
+
+        return this.restaurantsService.filterRestaurants(filterDto, user);
+    }
+
 
     @Get("carrousel")
     async restaurantsForCarrousel(@Req() request): Promise<Array<Restaurant> | HttpException> {
