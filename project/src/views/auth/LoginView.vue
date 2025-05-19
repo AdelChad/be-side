@@ -156,33 +156,39 @@
 
     .login-container {
         display: flex;
-        width: 100%;
-        max-width: 1200px;
+        width: 100vw; 
         height: 100vh;
         background-color: var(--color-secondary);
         color: var(--color-primary);
     }
 
+
     .login-image-container {
-        display: none;
         position: relative;
         flex: 1;
-    }
+        height: 100%;
+        overflow: hidden;
+        }
 
     .login-image {
+        position: absolute;
+        top: 0;
+        left: 0;
         width: 100%;
         height: 100%;
         object-fit: cover;
     }
 
     .login-overlay {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        padding: var(--space-5);
-        background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%);
+        position: relative;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center; /* aligne verticalement */
+        padding: var(--space-6);
         color: var(--color-secondary);
+        background: linear-gradient(to right, rgba(0,0,0,0.7), rgba(0,0,0,0)); /* optionnel */
+        z-index: 1;
     }
 
     .login-headline {

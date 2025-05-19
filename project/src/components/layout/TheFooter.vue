@@ -1,11 +1,14 @@
 <script setup lang="ts">
     import { ref } from 'vue'
+    import { useRoute } from 'vue-router'
+    const route = useRoute()
 
     const currentYear = ref(new Date().getFullYear())
 </script>
 
 <template>
-    <footer class="footer">
+    <footer v-if="!route.meta.hideFooter">
+        <div class="footer">
         <div class="container">
             <div class="footer-content">
                 <div class="footer-logo">
@@ -72,6 +75,7 @@
             <div class="footer-bottom">
                 <p class="copyright">© {{ currentYear }} BeSide. All rights reserved.</p>
             </div>
+        </div>
         </div>
     </footer>
 </template>
