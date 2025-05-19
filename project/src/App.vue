@@ -6,11 +6,11 @@
 
 <template>
     <div class="app-container">
-        <TheHeader />
+        <TheHeader  v-if="!$route.meta.hideNavbar"   />
         <main>
             <RouterView />
         </main>
-        <TheFooter />
+        <TheFooter  v-if="!$route.meta.hideFooter" />
     </div>
 </template>
 

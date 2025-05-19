@@ -76,10 +76,12 @@
                         <img src="../../assets/icons/beside blanc.png" alt="Logo Beside" class="logo-img" />
                     </router-link>
                 </div>
-                <nav class="nav">
+                <nav  v-if="!route.meta.hideNavbar">
+                    <div class="nav">
                     <router-link to="/search" class="nav-link">Recherche</router-link>
                     <router-link to="/explore" class="nav-link">Explorer</router-link>
                     <router-link to="/profile" class="nav-link">Mon profil</router-link>
+                    </div>
                 </nav>
 
                 <button class="burger-btn" @click="toggleMobileMenu">
