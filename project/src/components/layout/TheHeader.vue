@@ -81,6 +81,7 @@
                     <router-link to="/search" class="nav-link">Recherche</router-link>
                     <router-link to="/explore" class="nav-link">Explorer</router-link>
                     <router-link to="/profile" class="nav-link">Mon profil</router-link>
+                    <router-link to="/conversations" class="nav-link">Messagerie</router-link>
                     </div>
                 </nav>
 
@@ -93,6 +94,7 @@
                 <router-link to="/search" class="mobile-link" @click="toggleMobileMenu">Recherche</router-link>
                 <router-link to="/explore" class="mobile-link" @click="toggleMobileMenu">Explorer</router-link>
                 <router-link to="/profile" class="mobile-link" @click="toggleMobileMenu">Mon profil</router-link>
+                <router-link to="/conversations" class="mobile-link" @click="toggleMobileMenu">Messagerie</router-link>
 
                 <div v-if="!isAuthenticated()" class="mobile-auth">
                     <router-link v-if="route.path !== '/login'" to="/login" class="mobile-link" @click="toggleMobileMenu">Se connecter</router-link>
@@ -127,6 +129,7 @@
     .header {
         position: sticky;
         top: 0;
+        height:15vh;    
         z-index: 100;
         background-color: var(--color-primary);
         padding: var(--space-3) 0;
