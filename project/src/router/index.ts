@@ -4,6 +4,7 @@ import LoginView from '../views/auth/LoginView.vue'
 import SearchView from '../views/search/SearchView.vue'
 import SearchResultsView from '../views/search/SearchResultsView.vue'
 import ActivityDetailView from '../views/activities/ActivityDetailView.vue'
+import ConversationsView from '../views/ConversationsView.vue'
 import NotFoundView from '../views/NotFoundView.vue'
 import { isAuthenticated } from './guards'
 import AuthView from '../views/auth/AuthView.vue'
@@ -40,6 +41,12 @@ const router = createRouter({
             name: 'profil',
             component: ProfileView,
             meta: { requiresAuth: true }
+        },
+             {
+            path: '/conversations',
+            name: 'conversations',
+            component: ConversationsView,
+            meta: { requiresAuth: true,  hideFooter: true}
         },
         {
             path: '/search/results',

@@ -82,7 +82,6 @@
                         <SearchBar class="search-bar-wrapper" />
                         <router-link to="/search" class="nav-link">Test</router-link>
                         <router-link to="/search" class="nav-link">Test</router-link>
-
                     </div>
                 </nav>
 

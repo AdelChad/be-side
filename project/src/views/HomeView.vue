@@ -217,7 +217,7 @@
 
     .hero-content {
         position: absolute;
-        bottom: 20%;
+        bottom: 30%;
         left: 0;
         right: 0;
         z-index: 3;
