@@ -8,6 +8,7 @@
         id: string
         name: string
         photo: string
+        photos?: string[]
         country: string
         address: string
         city: string
@@ -50,6 +51,21 @@
         isFavorite.value = !isFavorite.value
     }
     
+    const currentImageIndex = ref(0)
+
+    function prevImage() {
+        if (!activity.value?.photos?.length) return;
+        currentImageIndex.value = (currentImageIndex.value - 1 + activity.value.photos.length) % activity.value.photos.length
+    }
+
+    function nextImage() {
+        if (!activity.value?.photos?.length) return;
+        currentImageIndex.value = (currentImageIndex.value + 1) % activity.value.photos.length
+    }
+
+
+
+
     //const currentImageIndex = ref(0)
     // function prevImage() {
     //     if (currentImageIndex.value > 0) {
@@ -69,81 +85,64 @@
 </script>
 
 <template>
-    <div class="activity-detail-view">
-        <div class="activity-background" :style="{ backgroundImage: `url(${activity?.photo})` }"></div>
-        
-        <div class="container detail-container">
-            <div class="detail-card">
-                <div class="activity-header">
-                    <div>
-                        <h1 class="activity-title">{{ activity?.name }}</h1>
-                        <p class="activity-location">{{ activity?.address }}</p>
-                        <div class="activity-rating">
-                            <span class="star-icon">✆</span>
-                            <span>{{ activity?.phoneNumber }}</span>
-                        </div>
-                        <div class="activity-rating">
-                            <span class="star-icon">★</span>
-                            <span>{{ activity?.rating }}</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- <div class="activity-tags">
-                    <span 
-                    v-for="(tag, index) in activity.tags" 
-                    :key="index"
-                    class="activity-tag"
-                    >
-                    {{ tag }}
-                    </span>
-                </div>
-                
-                <div class="activity-description">
-                    <h3 class="section-title">Description</h3>
-                    <p>{{ activity.description }}</p>
-                </div>
-                
-                <div class="activity-gallery">
-                    <button class="gallery-nav gallery-prev" @click="prevImage" aria-label="Previous image">
-                    &lt;
-                    </button>
-                    <div class="gallery-images">
-                        <img 
-                            v-for="(image, index) in activity.images" 
-                            :key="index"
-                            :src="image"
-                            :alt="`${activity.title} ${index + 1}`"
-                            :class="['gallery-image', { active: index === currentImageIndex }]"
-                        >
-                    </div>
-                    <button class="gallery-nav gallery-next" @click="nextImage" aria-label="Next image">
-                        &gt;
-                    </button>
-                </div> -->
-                
-                <div class="activity-actions">
-                    <button 
-                    :class="['action-btn favorite-btn', { 'favorite-active': isFavorite }]" 
-                    @click="toggleFavorite"
-                    aria-label="Add to favorites"
-                    >
-                        <span class="action-icon heart-icon">♥</span>
-                    </button>
-                    <button class="action-btn share-btn" aria-label="Share">
-                        <span class="action-icon">↗</span>
-                    </button>
-                    <button class="action-btn call-btn" aria-label="Call">
-                        <span class="action-icon">📞</span>
-                    </button>
-                    <button class="action-btn directions-btn" aria-label="Get directions">
-                        <span class="action-icon">⤧</span>
-                    </button>
-                </div>
-            </div>
+  <div class="activity-detail-view">
+    <div class="activity-background" :style="{ backgroundImage: `url(${activity?.photo})` }"></div>
+
+    <div class="container detail-container">
+      <div class="detail-card layout-split">
+        <!-- COLONNE GAUCHE -->
+        <div class="left-info">
+          <h1 class="activity-title">{{ activity?.name }}</h1>
+          <p class="activity-location">{{ activity?.address }}</p>
+          <div class="activity-rating">
+            <span class="star-icon">✆</span>
+            <span>{{ activity?.phoneNumber }}</span>
+          </div>
+          <div class="activity-rating">
+            <span class="star-icon">★</span>
+            <span>{{ activity?.rating }}</span>
+          </div>
+          <div class="description-title">Description</div>
+          <div class="activity-description">
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam nulla enim, imperdiet at volutpat nec, rhoncus in lorem. Vestibulum luctus sit amet massa nec cursus. Ut ut nunc leo. Mauris egestas laoreet sem ac pellentesque. Proin ultrices leo ut laoreet pretium. Integer lacinia euismod magna, nec posuere ex accumsan vel. Etiam vulputate nisi eget libero tristique, a maximus arcu efficitur. Nunc ac leo malesuada dolor ultricies malesuada.
+          </div>
+
+          <div class="activity-actions">
+            <button :class="['action-btn favorite-btn', { 'favorite-active': isFavorite }]" @click="toggleFavorite">
+              <span class="action-icon heart-icon">♥</span>
+            </button>
+            <button class="action-btn share-btn">
+              <span class="action-icon">↗</span>
+            </button>
+            <button class="action-btn call-btn">
+              <span class="action-icon">📞</span>
+            </button>
+            <button class="action-btn directions-btn">
+              <span class="action-icon">⤧</span>
+            </button>
+          </div>
         </div>
+
+        <!-- COLONNE DROITE -->
+        <div class="right-gallery">
+          <div class="main-image-container">
+            <img :src="activity?.photos?.[currentImageIndex] || activity?.photo" class="main-image" />
+          </div>
+          <div class="thumbnail-carousel">
+            <img
+              v-for="(img, index) in activity?.photos"
+              :key="index"
+              :src="img"
+              :class="['thumbnail', { active: index === currentImageIndex }]"
+              @click="currentImageIndex = index"
+            />
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 </template>
+
 
 <style scoped>
     .activity-detail-view {
@@ -179,7 +178,7 @@
         border-radius: var(--radius-lg);
         padding: var(--space-4);
         width: 100%;
-        max-width: 700px;
+        max-width: 1000px;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     }
 
@@ -194,6 +193,15 @@
         font-size: 1.8rem;
         font-weight: 700;
         margin-bottom: var(--space-2);
+    }
+
+    .description-title {
+        font-weight: 600;
+        margin-bottom: var(--space-2);
+    }
+
+    .activity-description { 
+        font-weight:300;
     }
 
     .activity-location {
@@ -318,6 +326,44 @@
         font-size: 1.25rem;
     }
 
+    .main-image-container {
+    width: 100%;
+    max-height: 400px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.main-image {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+    border-radius: var(--radius-lg);
+}
+
+.thumbnail-carousel {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 1rem;
+}
+
+.thumbnail {
+    width: 80px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    opacity: 0.7;
+    transition: transform 0.2s, opacity 0.2s;
+}
+
+.thumbnail:hover,
+.thumbnail.active {
+    transform: scale(1.05);
+    opacity: 1;
+}
+
+
     @media (min-width: 768px) {
         .detail-card {
             padding: var(--space-5);
@@ -336,4 +382,65 @@
             height: 80px;
         }
     }
+
+    .layout-split {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .layout-split {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .left-info {
+    flex: 1;
+    padding-right: 1.5rem;
+  }
+
+  .right-gallery {
+    flex: 1;
+    max-width: 50%;
+  }
+
+  .main-image-container {
+    height: 80vh;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+  }
+
+  .main-image {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+    border-radius: var(--radius-lg);
+  }
+
+  .thumbnail-carousel {
+    display: flex;
+    gap: 10px;
+    margin-top: 1rem;
+    overflow-x: auto;
+  }
+
+  .thumbnail {
+    width: 80px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    opacity: 0.7;
+    transition: transform 0.2s, opacity 0.2s;
+  }
+
+  .thumbnail:hover,
+  .thumbnail.active {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}
+
 </style>
