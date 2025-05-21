@@ -1,13 +1,16 @@
-import { IsNotEmpty, IsString } from "class-validator";
+import { IsIn, IsOptional, IsString } from 'class-validator';
 
 export class SearchActivityRestaurantDto {
     @IsString()
-    @IsNotEmpty()
-    search: string
+    @IsOptional()
+    search?: string;
 
     @IsString()
-    city: string
+    @IsOptional()
+    city?: string;
 
     @IsString()
+    @IsOptional()
+    @IsIn(['restaurant', 'activity'])
     type: string;
 }

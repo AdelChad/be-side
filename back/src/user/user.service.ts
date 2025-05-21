@@ -12,36 +12,41 @@ import { SearchActivityRestaurantDto } from './dto/generate-restaurants-pos.dto'
 import { GoogleApiService } from 'src/google-api/google-api.service';
 import { Trigonometrie } from 'src/utils/trigonometrie';
 
+
+type SearchResults = {
+  activities: Activities[];
+  restaurants: Restaurant[];
+};
 @Injectable()
 export class UserService {
-    constructor(
-        @InjectRepository(User)
-        private userRepository: Repository<User>,
+  constructor(
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
 
-        @InjectRepository(Activities)
-        public activitiesRepository: Repository<Activities>,
+    @InjectRepository(Activities)
+    public activitiesRepository: Repository<Activities>,
 
-        @InjectRepository(Restaurant)
-        public restaurantsRepository: Repository<Restaurant>,
+    @InjectRepository(Restaurant)
+    public restaurantsRepository: Repository<Restaurant>,
 
-        public trigonometrie: Trigonometrie,
+    public trigonometrie: Trigonometrie,
 
-        public googleApi: GoogleApiService,
-    ) {}
+    public googleApi: GoogleApiService,
+  ) { }
 
   findAll(): Promise<User[]> {
     return this.userRepository.find();
   }
 
-  async findOne(email: string): Promise<User | undefined>{
-    const user  = await  this.userRepository.findOne({where: {email}})
+  async findOne(email: string): Promise<User | undefined> {
+    const user = await this.userRepository.findOne({ where: { email } })
 
-    if(user){
-        return user
+    if (user) {
+      return user
     }
-    
+
     throw new HttpException(`__The user with email: ${email} was not found`, HttpStatus.NOT_FOUND)
-}
+  }
 
   async create(createUserDto: UserCreateDto) {
     const {
@@ -83,7 +88,7 @@ export class UserService {
     if (!user) {
       throw new NotFoundException('Utilisateur non trouvé');
     }
-  
+
     if (user.profilePicture && typeof user.profilePicture === 'string') {
       const oldPath = path.join(
         process.cwd(),
@@ -94,7 +99,7 @@ export class UserService {
         fs.unlinkSync(oldPath);
       }
     }
-  
+
     user.profilePicture = filename;
     return this.userRepository.save(user);
   }
@@ -117,62 +122,63 @@ export class UserService {
     return this.userRepository.save(user);
   }
 
-  async searchActivitiesRestaurant(searchActivityRestaurant: SearchActivityRestaurantDto, user: User): Promise<Activities[] | Restaurant[]> {
-    try {
-      const { search, city, type } = searchActivityRestaurant;
-      const cityRecovered = this.trigonometrie.isEmptyString(city) ? user.city : city;
-      const geocodeAddress = await this.googleApi.getAddresseGeocode(cityRecovered);
-  
-      if (type === 'restaurant') {
-        const restaurants = await this.restaurantsRepository.find({
-          where: { name: Like(`%${search}%`) }
-        });
-  
-        return restaurants.filter(r => this.trigonometrie.distance(geocodeAddress, r));
-      }
-  
-      if (type === 'activity') {
-        const activities = await this.activitiesRepository.find({
-          where: { name: Like(`%${search}%`) }
-        });
-  
-        return activities.filter(a => this.trigonometrie.distance(geocodeAddress, a));
-      }
-  
-      throw new BadRequestException('Type de recherche invalide');
-  
-    } catch (error) {
-      console.error('Error fetching activities or restaurants:', error);
+  async searchActivitiesRestaurant(
+    searchActivityRestaurant: SearchActivityRestaurantDto,
+    user: User
+  ): Promise<{ activities: Activities[]; restaurants: Restaurant[] }> {
+    const { search, city, type } = searchActivityRestaurant;
+    const cityRecovered = city?.trim() || user.city?.trim();
+
+    if (!cityRecovered) {
+      throw new BadRequestException('Aucune ville disponible pour la recherche');
     }
+
+    const geocodeAddress = await this.googleApi.getAddresseGeocode(cityRecovered);
+    const filters = search ? { name: Like(`%${search}%`) } : {};
+
+    const activities: Activities[] = [];
+    const restaurants: Restaurant[] = [];
+
+    if (!type || type === 'restaurant') {
+      const foundRestaurants = await this.restaurantsRepository.find({ where: filters });
+      restaurants.push(...foundRestaurants.filter(r => this.trigonometrie.distance(geocodeAddress, r)));
+    }
+
+    if (!type || type === 'activity') {
+      const foundActivities = await this.activitiesRepository.find({ where: filters });
+      activities.push(...foundActivities.filter(a => this.trigonometrie.distance(geocodeAddress, a)));
+    }
+
+    return { activities, restaurants };
   }
 
   async getActivitiesFav(user: User): Promise<Activities[]> {
-    const fullUser = await this.userRepository.findOne({ 
-      where: { id: user.id }, 
-      relations: ['favoritsActivities'] 
+    const fullUser = await this.userRepository.findOne({
+      where: { id: user.id },
+      relations: ['favoritsActivities']
     });
     if (!user) {
-        throw new BadRequestException('User must be provided');
+      throw new BadRequestException('User must be provided');
     }
-  
+
     const favorites = fullUser.favoritsActivities ?? [];
-  
+
     if (favorites.length === 0) {
       throw new NotFoundException('No favorite activities found for this user');
     }
-  
+
     return favorites;
   }
 
   async addActivitiFav(activityId: number, user: User) {
     const activity = await this.activitiesRepository.findOne({ where: { id: activityId } });
     if (!activity) throw new NotFoundException("Activity not found");
-    
+
     const fullUser = await this.userRepository.findOne({
       where: { id: user.id },
       relations: ['favoritsActivities'],
     });
-    
+
     const isAlreadyFavorite = fullUser.favoritsActivities.find(fav => fav.id === activity.id);
     if (!isAlreadyFavorite) {
       fullUser.favoritsActivities.push(activity);
@@ -184,9 +190,9 @@ export class UserService {
     const activity = await this.activitiesRepository.findOne({ where: { id: activityId } });
     if (!activity) throw new NotFoundException("Activity not found");
 
-    const fullUser = await this.userRepository.findOne({ 
-      where: { id: user.id }, 
-      relations: ['favoritsActivities'] 
+    const fullUser = await this.userRepository.findOne({
+      where: { id: user.id },
+      relations: ['favoritsActivities']
     });
     if (!fullUser) throw new NotFoundException("User not found");
 
@@ -198,9 +204,9 @@ export class UserService {
   }
 
   async getRestauFav(user: User): Promise<Restaurant[]> {
-    const fullUser = await this.userRepository.findOne({ 
-      where: { id: user.id }, 
-      relations: ['favoritsRestaurants'] 
+    const fullUser = await this.userRepository.findOne({
+      where: { id: user.id },
+      relations: ['favoritsRestaurants']
     });
     if (!user) {
       throw new BadRequestException('User must be provided');
@@ -235,9 +241,9 @@ export class UserService {
     const restaurant = await this.restaurantsRepository.findOne({ where: { id: restaurantId } });
     if (!restaurant) throw new NotFoundException("Restaurant not found");
 
-    const fullUser = await this.userRepository.findOne({ 
-      where: { id: user.id }, 
-      relations: ['favoritsRestaurants'] 
+    const fullUser = await this.userRepository.findOne({
+      where: { id: user.id },
+      relations: ['favoritsRestaurants']
     });
     if (!fullUser) throw new NotFoundException("User not found");
 

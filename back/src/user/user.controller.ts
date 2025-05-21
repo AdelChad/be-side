@@ -12,6 +12,7 @@ import {
   Req,
   HttpException,
   HttpStatus,
+  Query,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -53,15 +54,28 @@ export class UserController {
     return this.userService.findAll();
   }
 
+  // @UseGuards(AuthGuard)
+  // @Roles(['user'])
+  // @Get('search_activities_restaurant')
+  // async searchActivityRestaurant(@Body() searchActivityRestaurant: SearchActivityRestaurantDto, @Req() request): Promise<Activities[] | Restaurant[]> {
+  //   const userRequest: UserRequest = request.user
+  //   const user = await this.userService.findOne(userRequest.email)
+
+  //   return this.userService.searchActivitiesRestaurant(searchActivityRestaurant, user);
+  // }
+
   @UseGuards(AuthGuard)
   @Roles(['user'])
   @Get('search_activities_restaurant')
-  async searchActivityRestaurant(@Body() searchActivityRestaurant: SearchActivityRestaurantDto, @Req() request): Promise<Activities[] | Restaurant[]> {
-    const userRequest: UserRequest = request.user
-    const user = await this.userService.findOne(userRequest.email)
-
+  async searchActivityRestaurant(
+    @Query() searchActivityRestaurant: SearchActivityRestaurantDto,
+    @Req() request
+  ): Promise<{ activities: Activities[]; restaurants: Restaurant[] }> {
+    const userRequest: UserRequest = request.user;
+    const user = await this.userService.findOne(userRequest.email);
     return this.userService.searchActivitiesRestaurant(searchActivityRestaurant, user);
   }
+
 
   @UseGuards(AuthGuard)
   @Roles(['user'])
