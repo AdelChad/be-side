@@ -184,10 +184,10 @@
         height: 100%;
         display: flex;
         flex-direction: column;
-        justify-content: center; /* aligne verticalement */
+        justify-content: center;
         padding: var(--space-6);
         color: var(--color-secondary);
-        background: linear-gradient(to right, rgba(0,0,0,0.7), rgba(0,0,0,0)); /* optionnel */
+        background: linear-gradient(to right, rgba(0,0,0,0.7), rgba(0,0,0,0));
         z-index: 1;
     }
 
@@ -437,4 +437,29 @@
         padding: var(--space-5);
     }
     }
+    @media (max-width: 768px) {
+    .login-image-container {
+        display: none;
+    }
+
+    .login-form-content {
+        height: auto;
+    }
+
+    .login-form-container {
+        padding: var(--space-5);
+        overflow-y: auto;
+        max-height: 100vh;
+    }
+
+    .login-container {
+        flex-direction: column;
+        height: auto;
+        min-height: 100vh;
+    }
+
+    .login-view {
+        align-items: flex-start;
+    }
+}
 </style>

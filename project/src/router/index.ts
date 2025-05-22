@@ -9,6 +9,11 @@ import NotFoundView from '../views/NotFoundView.vue'
 import { isAuthenticated } from './guards'
 import AuthView from '../views/auth/AuthView.vue'
 import ProfileView from '../views/ProfileView.vue'
+import MentionsLegalesView from '../views/footer/MentionsLegalesView.vue'
+import ConditionsUtilisationView from '../views/footer/ConditionsUtilisationView.vue'
+import ConfidentialiteView from '../views/footer/ConfidentialiteView.vue'
+import APropos from '../views/footer/APropos.vue'
+import ContactView from '../views/footer/ContactView.vue'
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -42,11 +47,11 @@ const router = createRouter({
             component: ProfileView,
             meta: { requiresAuth: true }
         },
-             {
+        {
             path: '/conversations',
             name: 'conversations',
             component: ConversationsView,
-            meta: { requiresAuth: true,  hideFooter: true}
+            meta: { requiresAuth: true, hideFooter: true }
         },
         {
             path: '/search/results',
@@ -58,6 +63,36 @@ const router = createRouter({
             path: '/activities/:id',
             name: 'activity-detail',
             component: ActivityDetailView,
+            meta: { requiresAuth: true }
+        },
+        {
+            path: '/mentions-legales',
+            name: 'mentions-legales',
+            component: MentionsLegalesView,
+            meta: { requiresAuth: true }
+        },
+        {
+            path: '/conditions-utilisation',
+            name: 'conditions-utilisation',
+            component: ConditionsUtilisationView,
+            meta: { requiresAuth: true }
+        },
+        {
+            path: '/confidentialite',
+            name: 'confidentialite',
+            component: ConfidentialiteView,
+            meta: { requiresAuth: true }
+        },
+        {
+            path: '/a-propos',
+            name: 'a-propos',
+            component: APropos,
+            meta: { requiresAuth: true }
+        },
+        {
+            path: '/contact',
+            name: 'contact',
+            component: ContactView,
             meta: { requiresAuth: true }
         },
         {
