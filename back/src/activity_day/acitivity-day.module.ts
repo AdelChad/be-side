@@ -4,9 +4,10 @@ import { ActivityDayService } from './activity-day.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ActivityDay } from './activity-day.entity';
 import { Activities } from 'src/activities/activities.entity';
+import { Restaurant } from 'src/restaurant/restaurant.entity';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([ActivityDay, Activities])],
+    imports: [TypeOrmModule.forFeature([ActivityDay, Activities, Restaurant])],
     controllers: [ActivityDayController],
     providers: [ActivityDayService],
     exports: [ActivityDayService]

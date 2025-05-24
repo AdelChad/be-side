@@ -6,6 +6,7 @@ import { Activities } from 'src/activities/activities.entity';
 import { ActivitiesService } from 'src/activities/activities.service';
 import { UpdateActivityDto } from './dto/update-activityDay';
 import { dayTimeMapping } from 'src/constantes/constantes';
+import { Restaurant } from 'src/restaurant/restaurant.entity';
 
 @Injectable()
 export class ActivityDayService {
@@ -16,38 +17,6 @@ export class ActivityDayService {
         @InjectRepository(Activities)
         public activitiesRepository: Repository<Activities>,
     ) { }
-
-    async getActivitiesOfTheDay() {
-    }
-
-
-    
-    
-    async createActivityDaY(dateOfTheJourney: string, activities: Activities[]) {
-        //créer l'objet activityday
-        try{
-
-            let activityDay = await this.activityDayRepository.create()
-    
-            outerLoop: for (const activity of activities) {
-                for (const daytime of activity.dayTime) {
-                    const property = dayTimeMapping[daytime]; 
-                    if (property && activityDay[property] === undefined) {
-                        activityDay[property] = activity; 
-                        continue outerLoop;
-    
-                    }
-                }
-            }
-    
-            activityDay.date = new Date(dateOfTheJourney)
-    
-    
-            return await activityDay.save()
-        }catch{
-            throw new HttpException('Some Problems on Creating day Activity', HttpStatus.BAD_REQUEST)
-        }
-    }
 
     async addActivityInDay(id: number, updateActivityDto: UpdateActivityDto): Promise<ActivityDay> {
         const { idActivities, date, daytime } = updateActivityDto

@@ -10,12 +10,6 @@ import { ActivityDay } from './activity-day.entity';
 export class ActivityDayController {
     constructor(private activityDayService: ActivityDayService) { }
 
-
-    @Get()
-    generatedActivities() {
-        return this.activityDayService.getActivitiesOfTheDay()
-    }
-
     @UseGuards(AuthGuard)
     @Roles(['user'])
     @Put(':id')

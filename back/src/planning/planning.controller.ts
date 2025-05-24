@@ -1,29 +1,60 @@
-import { Controller, Get, Param, ParseIntPipe, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Put, Req, UseGuards } from '@nestjs/common';
 import { PlanningService } from './planning.service';
 import { Planning } from './planning.entity';
 import { Roles } from 'src/decorators/role.decorator';
 import { AuthGuard } from 'src/guard/auth.guard';
+import { UserRequest } from 'src/interface/user-request.interface';
+import { UserService } from 'src/user/user.service';
+import { ActivityDay } from 'src/activity_day/activity-day.entity';
+import { Activities } from 'src/activities/activities.entity';
+import { PlanningCreateDto } from './dto/create-planning.dto';
+import { PlanningUpdateDto } from './dto/modify-planning.dto';
 
 @Controller('plannings')
 export class PlanningController {
-    constructor(private readonly planningService: PlanningService) { }
+    constructor(
+        private readonly planningService: PlanningService,
+        private userService: UserService
+    ) { }
 
+    @UseGuards(AuthGuard)
+    @Roles(['user'])
     @Get()
-    async getAllPlannings(): Promise<Planning[]> {
-        return this.planningService.getAllPlannings();
+    async getAllPlanningsUser(@Req() request): Promise<Planning[]> {
+        const userRequest: UserRequest = request.user
+        const user = await this.userService.findOne(userRequest.email)
+
+        return this.planningService.getAllPlannings(user);
     }
+
+    @UseGuards(AuthGuard)
+    @Roles(['user'])
+    @Post('create')
+    async createPlanning(@Body() activitiesCreateDto: PlanningCreateDto, @Req() request): Promise<Planning> {
+        const userRequest: UserRequest = request.user
+        const user = await this.userService.findOne(userRequest.email)
+
+        return await this.planningService.createPlanning(activitiesCreateDto, user)
+    }
+
+    @UseGuards(AuthGuard)
+    @Roles(['user'])
+    @Post('update')
+    async modifyPlanning(@Body() activitiesCreateDto: PlanningUpdateDto, @Req() request): Promise<Planning> {
+        const userRequest: UserRequest = request.user
+        const user = await this.userService.findOne(userRequest.email)
+
+        return await this.planningService.modifyActivityDay(activitiesCreateDto, user)
+    }
+
 
     @UseGuards(AuthGuard)
     @Roles(['user'])
     @Get(':id')
-    async getPlanningById(@Param('id', ParseIntPipe) id: number): Promise<Planning> {
-        return await this.planningService.getPlanningById(id);
-    }
+    async getPlanningById(@Body() id: number, @Req() request): Promise<Planning> {
+        const userRequest: UserRequest = request.user
+        const user = await this.userService.findOne(userRequest.email)
 
-    @UseGuards(AuthGuard)
-    @Roles(['user'])
-    @Put(':id')
-    async addActivityDay(@Param('id', ParseIntPipe) id: number): Promise<Planning> {
-        return await this.planningService.addActivityDay(id)
+        return await this.planningService.getPlanningById(id, user);
     }
 }
