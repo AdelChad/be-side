@@ -170,10 +170,12 @@ function removeFavorite(id: number, type: 'activity' | 'restaurant') {
             <div class="card-content">
               <div class="activities-grid" v-if="favoriteActivities.length">
                 <div v-for="activity in paginatedActivities" :key="activity.id" class="activity-item">
+                   <router-link :to="`/activities/${activity.id}`" class="activity-item-link">
                   <img :src="activity.photo" :alt="activity.name" class="activity-image" />
                   <div class="activity-overlay">
                     <h4>{{ activity.name }}</h4>
                   </div>
+                  </router-link>
                   <button class="heart-icon favorite-btn" @click="removeFavorite(activity.id, 'activity')">
                     ♥
                   </button>
@@ -199,10 +201,12 @@ function removeFavorite(id: number, type: 'activity' | 'restaurant') {
             <div class="card-content">
               <div class="restaurants-grid" v-if="favoriteRestaurants.length">
                 <div v-for="restaurant in paginatedRestaurants" :key="restaurant.id" class="restaurant-item">
+                  <router-link :to="`/restaurants/${restaurant.id}`" class="activity-item-link">
                   <img :src="restaurant.photo" :alt="restaurant.name" class="restaurant-image" />
                   <div class="restaurant-overlay">
                     <h4>{{ restaurant.name }}</h4>
                   </div>
+                  </router-link>
                   <button class="heart-icon favorite-btn" @click="removeFavorite(restaurant.id, 'restaurant')">
                     ♥
                   </button>
