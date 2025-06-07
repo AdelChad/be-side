@@ -286,12 +286,13 @@
           </div>
         </div>
         
-        <div class="image-container">
-          <div class="image-overlay">
-            <h2 class="overlay-title">Découvrez de nouvelles expériences</h2>
-            <p class="overlay-text">Rejoignez notre communauté et accédez à des opportunités uniques.</p>
-          </div>
-        </div>
+<div class="image-container">
+  <img src="../../assets/icons/beside blanc.png" alt="Logo Beside" class="logo-img" />
+  <div class="image-overlay">
+    <h2 class="overlay-title">Découvrez de nouvelles expériences</h2>
+    <p class="overlay-text">Rejoignez notre communauté et accédez à des opportunités uniques.</p>
+  </div>
+</div>
       </div>
     </div>
   </template>
@@ -337,17 +338,17 @@
   }
 
   .signup-view {
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden;
+  min-height: 100vh;
+  height: auto;
+  overflow-y: auto;
   display: flex;
   background-color: var(--color-primary);
   }
 
   .signup-container {
     display: flex;
+    flex: 1;
     width: 100%;
-    height: 100%;
     background-color: var(--color-secondary);
   }
 
@@ -356,8 +357,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--space-5);
-  overflow: hidden; 
+  padding: var(--space-4);
   }
 
   .form-content {
@@ -505,6 +505,15 @@
     color: white;
   }
 
+  .logo-img {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  height: 150px;
+  width: auto;
+  z-index: 2;
+}
+
   .overlay-title {
     font-size: 2rem;
     font-weight: 700;
@@ -525,6 +534,7 @@
     
     .form-container {
       padding: var(--space-6);
+      overflow-y: auto;
     }
   }
 
