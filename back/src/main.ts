@@ -5,11 +5,12 @@ import * as express from 'express';
 import * as path from 'path';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    cors: {
-      methods: ['GET', 'POST', 'PUT', 'DELETE'],
-      origin: ["http://localhost:5173", "http://127.0.0.1:5500"]
-    }
+  const app = await NestFactory.create(AppModule);
+
+  app.enableCors({
+    origin: ['http://localhost:5173', 'http://127.0.0.1:5500'],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
   });
 
   app.useGlobalPipes(new ValidationPipe());

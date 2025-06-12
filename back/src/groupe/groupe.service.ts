@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { Groupe } from './groupe.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -15,6 +15,21 @@ export class GroupeService {
         @InjectRepository(User)
         public userRepository: Repository<User>
     ){}
+
+    async getGroupsByUser(user: User): Promise<Groupe[]> {
+        const groupes = await this.groupRepository.find({
+            where: [
+                { creator: { id: user.id } },
+                { members: { id: user.id } },
+            ],
+            relations: ['creator', 'members', 'planning'],
+        });
+
+        if (!groupes || groupes.length === 0) {
+            throw new NotFoundException('Aucun groupe trouvé pour cet utilisateur.');
+        }
+        return groupes;
+    }
 
     async createGroupe(groupeCreateDto: GroupeCreateDto, user: User): Promise<Groupe | undefined>{
 
@@ -71,7 +86,6 @@ export class GroupeService {
     }
 
     async removeUser(removeUserDto: groupeUserDto, user: User): Promise<Groupe | undefined>{
-
         const { groupeId, users } = removeUserDto
 
         const groupe = await this.groupRepository.findOne({
@@ -89,5 +103,4 @@ export class GroupeService {
     
         return groupe;
     }
-
 }

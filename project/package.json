@@ -10,7 +10,9 @@
     },
     "dependencies": {
         "@vueuse/core": "^10.7.0",
+        "jwt-decode": "^4.0.0",
         "pinia": "^2.1.7",
+        "socket.io-client": "^4.8.1",
         "vue": "^3.4.38",
         "vue-router": "^4.2.5"
     },

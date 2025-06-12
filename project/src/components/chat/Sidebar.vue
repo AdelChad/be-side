@@ -1,3 +1,55 @@
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { jwtDecode } from 'jwt-decode'
+import { selectedGroupId } from '../../stores/chat'
+
+const searchQuery = ref('')
+const chats = ref([])
+
+const token = localStorage.getItem('access_token')
+let userId = null
+
+if (token) {
+  try {
+    const decoded = jwtDecode(token)
+    userId = decoded.sub
+  } catch (e) {
+    console.error('Token invalide ou corrompu', e)
+  }
+}
+
+onMounted(async () => {
+  if (!token) return
+
+  try {
+    const response = await fetch(`http://localhost:3000/groupe`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      }
+    })
+
+    if (!response.ok) {
+      throw new Error(`Erreur ${response.status}`)
+    }
+
+    const data = await response.json()
+    chats.value = data.map(groupe => ({
+      id: groupe.id,
+      name: groupe.groupeName,
+    }))
+  } catch (error) {
+    console.error('Erreur lors de la récupération des groupes :', error)
+  }
+})
+
+const filteredChats = computed(() =>
+  chats.value.filter(chat =>
+    chat.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+  )
+)
+</script>
+
 <template>
   <div class="sidebar">
     <div class="sidebar-header">
@@ -8,37 +60,16 @@
         v-model="searchQuery"
       />
     </div>
-    <div v-for="chat in  filteredChats" :key="chat.name" class="chat-item">
+    <div
+      v-for="chat in filteredChats"
+      :key="chat.id"
+      class="chat-item"
+      @click="selectedGroupId = chat.id"
+    >
       <div class="chat-name">{{ chat.name }}</div>
-      <div class="chat-message">{{ chat.lastMessage }}</div>
     </div>
   </div>
 </template>
-
-<script setup>
-
-import { ref, computed } from 'vue'
-
-const searchQuery = ref('')
-
-const chats = [
-  { name: 'Jessica Drew', lastMessage: 'Ok, see you later' },
-  { name: 'David Moore', lastMessage: 'i don\'t remember anything 😅' },
-  { name: 'Greg James', lastMessage: 'I got a job at SpaceX 🎉🚀' },
-  { name: 'Emily Dorson', lastMessage: 'Table for four, 5PM. Be there.' },
-  { name: 'Office Chat', lastMessage: 'Lewis: All done mate 😅' },
-  { name: 'Announcements', lastMessage: 'Channel created' },
-  { name: 'Little Sister', lastMessage: 'Tell mom I will be home for tea 💜' },
-  { name: 'Art Class', lastMessage: 'Emily: 🎨Editorial' }
-]
-
-const filteredChats = computed(() =>
-  chats.filter(chat =>
-    chat.name.toLowerCase().includes(searchQuery.value.toLowerCase())
-  )
-)
-
-</script>
 
 <style scoped>
 .sidebar {

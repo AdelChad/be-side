@@ -28,13 +28,11 @@ export class PlanningUpdateDto {
     date: Date;
 
     @IsArray()
-    @IsNotEmpty()
     @ValidateNested({ each: true })
     @Type(() => ActivitiMinimal)
-    activitie: ActivitiMinimal[];;
+    activities: ActivitiMinimal[];;
 
     @IsArray()
-    @IsNotEmpty()
     @ValidateNested({ each: true })
     @Type(() => RestauMinimal)
     restaurants: RestauMinimal[];;
