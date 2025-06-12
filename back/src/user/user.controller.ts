@@ -37,7 +37,6 @@ export class UserController {
   async getUser(@Req() request): Promise<User> {
 
     const userRequest: UserRequest = request.user
-    console.log(request.user);
     const user = await this.userService.findOne(userRequest.email)
 
     if (!user) {

@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { GroupeService } from './groupe.service';
 import { Groupe } from './groupe.entity';
 import { Roles } from 'src/decorators/role.decorator';
@@ -12,6 +12,16 @@ import { groupeUserDto } from './dto/groupe-user.dto';
 export class GroupeController {
     constructor(private groupeService: GroupeService, private userService: UserService) { }
 
+    @UseGuards(AuthGuard)
+    @Roles(['user'])
+    @Get()
+    async getGroupeUser(@Req() request): Promise<Groupe[]> {
+        const userRequest: UserRequest = request.user
+        const user = await this.userService.findOne(userRequest.email)
+
+        return this.groupeService.getGroupsByUser(user)
+    }
+    
     @UseGuards(AuthGuard)
     @Roles(['user'])
     @Post('create')
