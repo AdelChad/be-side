@@ -1,301 +1,259 @@
-  <script setup lang="ts">
-  import { ref } from 'vue';
-  import router from '../../router';
-  import CountrySelect from '../../components/CountrySelect.vue';
+<script setup lang="ts">
+import { ref } from 'vue';
+import router from '../../router';
+import CountrySelect from '../../components/CountrySelect.vue';
 
-  const country = ref('');
-  const firstName = ref('');
-  const lastName = ref('');
-  const phoneNumber = ref('');
-  const email = ref('');
-  const password = ref('');
-  const checkPassword = ref('');
-  const dateofbirthday = ref('');
-  const city = ref('');
-  const errorMessageAuth = ref('');
-  const passwordError = ref(false);
-  const isSubmitting = ref(false);
+const country = ref('');
+const firstName = ref('');
+const lastName = ref('');
+const phoneNumber = ref('');
+const email = ref('');
+const password = ref('');
+const checkPassword = ref('');
+const dateofbirthday = ref('');
+const city = ref('');
+const isSubmitting = ref(false);
 
-  const checkPasswords = () => {
-    if (!password.value || !checkPassword.value) {
-      passwordError.value = true;
-      errorMessageAuth.value = 'Veuillez remplir les champs mot de passe et confirmer le mot de passe.';
-    } else if (password.value !== checkPassword.value) {
-      passwordError.value = true;
-      errorMessageAuth.value = 'Les mots de passe ne correspondent pas.';
+const errors = ref<Record<string, string>>({});
+
+const validatePassword = () => {
+  const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{12,}$/;
+  if (!passwordRegex.test(password.value)) {
+    errors.value.password = "Le mot de passe doit contenir au moins 12 caractères, une majuscule, un chiffre et un caractère spécial.";
+    return false;
+  }
+  delete errors.value.password;
+  return true;
+};
+
+const checkPasswords = () => {
+  if (!password.value || !checkPassword.value) {
+    errors.value.password = 'Veuillez remplir les champs mot de passe et confirmation.';
+  } else if (password.value !== checkPassword.value) {
+    errors.value.password = 'Les mots de passe ne correspondent pas.';
+  } else if (!validatePassword()) {
+    // handled inside validatePassword
+  } else {
+    delete errors.value.password;
+  }
+};
+
+const dateRegex = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/;
+
+const validateDateOfBirth = () => {
+  if (!dateRegex.test(dateofbirthday.value)) {
+    errors.value.dateofbirthday = 'Format de date invalide. Utilisez AAAA-MM-JJ.';
+    return false;
+  }
+  delete errors.value.dateofbirthday;
+  return true;
+};
+
+const formatDateToISO = (dateStr: string) => {
+  if (!dateStr.includes('/')) return dateStr;
+  const [day, month, year] = dateStr.split('/');
+  return `${year}-${month}-${day}`;
+};
+
+const validateEmail = () => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email.value)) {
+    errors.value.email = "L'adresse e-mail n'est pas valide.";
+    return false;
+  }
+  delete errors.value.email;
+  return true;
+};
+
+const validateName = (field: 'firstName' | 'lastName') => {
+  const nameRegex = /^[A-Za-zÀ-ÖØ-öø-ÿ' -]+$/;
+  const value = field === 'firstName' ? firstName.value : lastName.value;
+  if (!nameRegex.test(value)) {
+    errors.value[field] = `Le ${field === 'firstName' ? 'prénom' : 'nom'} saisi n'est pas valide.`;
+    return false;
+  }
+  delete errors.value[field];
+  return true;
+};
+
+const validateCity = () => {
+  const cityRegex = /^[A-Za-zÀ-ÖØ-öø-ÿ' -]+$/;
+  if (!cityRegex.test(city.value)) {
+    errors.value.city = "La ville saisie n'est pas valide.";
+    return false;
+  }
+  delete errors.value.city;
+  return true;
+};
+
+const validatePhoneNumber = () => {
+  const phoneRegex = /^\d{10}$/;
+  if (!phoneRegex.test(phoneNumber.value)) {
+    errors.value.phoneNumber = 'Le numéro de téléphone doit contenir exactement 10 chiffres.';
+    return false;
+  }
+  delete errors.value.phoneNumber;
+  return true;
+};
+
+const handlePhoneNumberInput = (event: Event) => {
+  const input = event as unknown as InputEvent;
+  const target = input.target as HTMLInputElement;
+  target.value = target.value.replace(/\D/g, '').slice(0, 10);
+  phoneNumber.value = target.value;
+};
+
+const createUserForm = async (e: Event) => {
+  e.preventDefault();
+  checkPasswords();
+
+  if (
+    errors.value.password ||
+    !validateName('firstName') ||
+    !validateName('lastName') ||
+    !validateEmail() ||
+    !validatePhoneNumber() ||
+    !validateDateOfBirth() ||
+    !validateCity()
+  ) {
+    return;
+  }
+
+  try {
+    isSubmitting.value = true;
+    const formattedDate = formatDateToISO(dateofbirthday.value);
+
+    const response = await fetch('http://localhost:3000/users', {
+      method: 'POST',
+      headers: {
+        'Content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        firstName: firstName.value,
+        lastName: lastName.value,
+        email: email.value,
+        phoneNumber: phoneNumber.value,
+        password: password.value,
+        dateofbirthday: formattedDate,
+        city: city.value,
+        country: country.value
+      })
+    });
+
+    const result = await response.json();
+    if (response.ok) {
+      router.push('/');
     } else {
-      passwordError.value = false;
-      errorMessageAuth.value = '';
+      errors.value.email = result.error?.includes('E-mail already exists')
+        ? 'Cette adresse e-mail est déjà utilisée.'
+        : "Échec de la création de l'utilisateur. Veuillez réessayer.";
     }
-  };
+  } catch (error) {
+    console.error(error);
+    errors.value.general = 'Une erreur est survenue, veuillez réessayer.';
+  } finally {
+    isSubmitting.value = false;
+  }
+};
+</script>
 
-  const dateRegex = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/;
 
-  const validateDateOfBirth = () => {
-    if (!dateRegex.test(dateofbirthday.value)) {
-      errorMessageAuth.value = 'Format de date invalide. Utilisez AAAA-MM-JJ.';
-      return false;
-    }
-    return true;
-  };
+<template>
+  <div class="signup-view">
+    <div class="signup-container">
+      <div class="form-container">
+        <div class="form-content">
+          <h1 class="title">Bienvenue !</h1>
+          <p class="subtitle">C'est parti, création d'un compte !</p>
 
-  const formatDateToISO = (dateStr: string) => {
-    if (!dateStr.includes('/')) return dateStr;
-    const [day, month, year] = dateStr.split('/');
-    return `${year}-${month}-${day}`;
-  };
-
-  const validateEmail = () => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email.value)) {
-      errorMessageAuth.value = "L'adresse e-mail n'est pas valide.";
-      return false;
-    }
-    return true;
-  };
-
-  const validateName = (field: 'firstName' | 'lastName') => {
-    const nameRegex = /^[A-Za-zÀ-ÖØ-öø-ÿ' -]+$/;
-    const value = field === 'firstName' ? firstName.value : lastName.value;
-    if (!nameRegex.test(value)) {
-      errorMessageAuth.value = `Le ${field === 'firstName' ? 'prénom' : 'nom'} saisi n'est pas valide.`;
-      return false;
-    }
-    return true;
-  };
-
-  const validateCity = () => {
-    const cityRegex = /^[A-Za-zÀ-ÖØ-öø-ÿ' -]+$/;
-    if (!cityRegex.test(city.value)) {
-      errorMessageAuth.value = "La ville saisie n'est pas valide.";
-      return false;
-    }
-    return true;
-  };
-
-  const validatePhoneNumber = () => {
-    const phoneRegex = /^\d{10}$/;
-    if (!phoneRegex.test(phoneNumber.value)) {
-      errorMessageAuth.value = 'Le numéro de téléphone doit contenir exactement 10 chiffres.';
-      return false;
-    }
-    return true;
-  };
-
-  const handlePhoneNumberInput = (event: Event) => {
-    const input = event as unknown as InputEvent;
-    const target = input.target as HTMLInputElement;
-    target.value = target.value.replace(/\D/g, '').slice(0, 10);
-    phoneNumber.value = target.value;
-  };
-
-  const createUserForm = async (e: Event) => {
-    e.preventDefault();
-    checkPasswords();
-    
-    if (
-      passwordError.value ||
-      !validateName('firstName') ||
-      !validateName('lastName') ||
-      !validateEmail() ||
-      !validatePhoneNumber() ||
-      !validateDateOfBirth() ||
-      !validateCity()
-    ) {
-      return;
-    }
-
-    try {
-      isSubmitting.value = true;
-      errorMessageAuth.value = '';
-      const formattedDate = formatDateToISO(dateofbirthday.value);
-
-      const response = await fetch('http://localhost:3000/users', {
-        method: 'POST',
-        headers: {
-          'Content-type': 'application/json'
-        },
-        body: JSON.stringify({
-          firstName: firstName.value,
-          lastName: lastName.value,
-          email: email.value,
-          phoneNumber: phoneNumber.value,
-          password: password.value,
-          dateofbirthday: formattedDate,
-          city: city.value,
-          country: country.value
-        })
-      });
-
-      const result = await response.json();
-      if (response.ok) {
-        router.push('/')
-      } else {
-        errorMessageAuth.value =
-          result.error && result.error.includes('E-mail already exists')
-            ? 'Cette adresse e-mail est déjà utilisée.'
-            : "Échec de la création de l'utilisateur. Veuillez réessayer.";
-      }
-    } catch (error) {
-      console.error(error);
-      errorMessageAuth.value = 'Une erreur est survenue, veuillez réessayer.';
-    } finally {
-      isSubmitting.value = false;
-    }
-  };
-  </script>
-
-  <template>
-    <div class="signup-view">
-      <div class="signup-container">
-        <div class="form-container">
-          <div class="form-content">
-            <h1 class="title">Bienvenue !</h1>
-            <p class="subtitle">C'est parti, création d'un compte !</p>
-            
-            <form @submit.prevent="createUserForm" class="signup-form">
-              <div class="form-grid">
-                <div class="form-group">
-                  <label for="lastName" class="form-label">Nom</label>
-                  <input
-                    id="lastName"
-                    v-model="lastName"
-                    type="text"
-                    class="form-control"
-                    placeholder="Votre nom"
-                    @blur="validateName('lastName')"
-                    required
-                  />
-                </div>
-                
-                <div class="form-group">
-                  <label for="firstName" class="form-label">Prénom</label>
-                  <input
-                    id="firstName"
-                    v-model="firstName"
-                    type="text"
-                    class="form-control"
-                    placeholder="Votre prénom"
-                    @blur="validateName('firstName')"
-                    required
-                  />
-                </div>
-                
-                <div class="form-group">
-                  <label for="phoneNumber" class="form-label">Téléphone</label>
-                  <input
-                    id="phoneNumber"
-                    v-model="phoneNumber"
-                    type="tel"
-                    class="form-control"
-                    placeholder="0612345678"
-                    @input="handlePhoneNumberInput"
-                    @blur="validatePhoneNumber"
-                    maxlength="10"
-                    required
-                  />
-                </div>
-                
-                <div class="form-group">
-                  <label for="email" class="form-label">Email</label>
-                  <input
-                    id="email"
-                    v-model="email"
-                    type="email"
-                    class="form-control"
-                    placeholder="exemple@email.com"
-                    @blur="validateEmail"
-                    required
-                  />
-                </div>
-                
-                <div class="form-group">
-                  <label for="city" class="form-label">Ville</label>
-                  <input
-                    id="city"
-                    v-model="city"
-                    type="text"
-                    class="form-control"
-                    placeholder="Votre ville"
-                    @blur="validateCity"
-                    required
-                  />
-                </div>
-                
-                <div class="form-group">
-                  <label for="country" class="form-label">Pays</label>
-                  <CountrySelect v-model:country="country" />
-                </div>
-                
-                <div class="form-group">
-                  <label for="password" class="form-label">Mot de passe</label>
-                  <input
-                    id="password"
-                    v-model="password"
-                    type="password"
-                    class="form-control"
-                    placeholder="••••••••••"
-                    @input="checkPasswords"
-                    required
-                  />
-                </div>
-                
-                <div class="form-group">
-                  <label for="confirmPassword" class="form-label">Confirmer le mot de passe</label>
-                  <input
-                    id="confirmPassword"
-                    v-model="checkPassword"
-                    type="password"
-                    class="form-control"
-                    placeholder="••••••••••"
-                    @input="checkPasswords"
-                    required
-                  />
-                </div>
+          <form @submit.prevent="createUserForm" class="signup-form">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="lastName" class="form-label">Nom</label>
+                <input id="lastName" v-model="lastName" type="text" class="form-control"
+                       placeholder="Votre nom" @blur="validateName('lastName')" required />
+                <div v-if="errors.lastName" class="error-message">{{ errors.lastName }}</div>
               </div>
-              
-              <div class="form-group full-width">
-                <label for="dateofbirthday" class="form-label">Date de naissance</label>
-                <input
-                  id="dateofbirthday"
-                  v-model="dateofbirthday"
-                  type="date"
-                  class="form-control"
-                  @blur="validateDateOfBirth"
-                  required
-                />
+
+              <div class="form-group">
+                <label for="firstName" class="form-label">Prénom</label>
+                <input id="firstName" v-model="firstName" type="text" class="form-control"
+                       placeholder="Votre prénom" @blur="validateName('firstName')" required />
+                <div v-if="errors.firstName" class="error-message">{{ errors.firstName }}</div>
               </div>
-              
-              <div v-if="errorMessageAuth" class="error-message">
-                {{ errorMessageAuth }}
+
+              <div class="form-group">
+                <label for="phoneNumber" class="form-label">Téléphone</label>
+                <input id="phoneNumber" v-model="phoneNumber" type="tel" class="form-control"
+                       placeholder="0612345678" @input="handlePhoneNumberInput"
+                       @blur="validatePhoneNumber" maxlength="10" required />
+                <div v-if="errors.phoneNumber" class="error-message">{{ errors.phoneNumber }}</div>
               </div>
-              
-              <button 
-                type="submit" 
-                class="btn-primary" 
-                :disabled="isSubmitting"
-              >
-                {{ isSubmitting ? 'Inscription en cours...' : 'S\'inscrire' }}
-              </button>
-              
-              <div class="login-link">
-                <p>Vous avez déjà un compte ?</p>
-                <router-link to="/login" class="text-link">Se connecter !</router-link>
+
+              <div class="form-group">
+                <label for="email" class="form-label">Email</label>
+                <input id="email" v-model="email" type="email" class="form-control"
+                       placeholder="exemple@email.com" @blur="validateEmail" required />
+                <div v-if="errors.email" class="error-message">{{ errors.email }}</div>
               </div>
-            </form>
-          </div>
+
+              <div class="form-group">
+                <label for="city" class="form-label">Ville</label>
+                <input id="city" v-model="city" type="text" class="form-control"
+                       placeholder="Votre ville" @blur="validateCity" required />
+                <div v-if="errors.city" class="error-message">{{ errors.city }}</div>
+              </div>
+
+              <div class="form-group">
+                <label for="country" class="form-label">Pays</label>
+                <CountrySelect v-model:country="country" />
+              </div>
+
+              <div class="form-group">
+                <label for="password" class="form-label">Mot de passe</label>
+                <input id="password" v-model="password" type="password" class="form-control"
+                       placeholder="••••••••••" @input="checkPasswords" required />
+                <div v-if="errors.password" class="error-message">{{ errors.password }}</div>
+              </div>
+
+              <div class="form-group">
+                <label for="confirmPassword" class="form-label">Confirmer le mot de passe</label>
+                <input id="confirmPassword" v-model="checkPassword" type="password"
+                       class="form-control" placeholder="••••••••••" @input="checkPasswords" required />
+              </div>
+            </div>
+
+            <div class="form-group full-width">
+              <label for="dateofbirthday" class="form-label">Date de naissance</label>
+              <input id="dateofbirthday" v-model="dateofbirthday" type="date" class="form-control"
+                     @blur="validateDateOfBirth" required />
+              <div v-if="errors.dateofbirthday" class="error-message">{{ errors.dateofbirthday }}</div>
+            </div>
+
+            <div v-if="errors.general" class="error-message">{{ errors.general }}</div>
+
+            <button type="submit" class="btn-primary" :disabled="isSubmitting">
+              {{ isSubmitting ? 'Inscription en cours...' : 'S\'inscrire' }}
+            </button>
+
+            <div class="login-link">
+              <p>Vous avez déjà un compte ?</p>
+              <router-link to="/login" class="text-link">Se connecter !</router-link>
+            </div>
+          </form>
         </div>
-        
-<div class="image-container">
-  <img src="../../assets/icons/beside blanc.png" alt="Logo Beside" class="logo-img" />
-  <div class="image-overlay">
-    <h2 class="overlay-title">Découvrez de nouvelles expériences</h2>
-    <p class="overlay-text">Rejoignez notre communauté et accédez à des opportunités uniques.</p>
-  </div>
-</div>
+      </div>
+
+      <div class="image-container">
+        <img src="../../assets/icons/beside blanc.png" alt="Logo Beside" class="logo-img" />
+        <div class="image-overlay">
+          <h2 class="overlay-title">Découvrez de nouvelles expériences</h2>
+          <p class="overlay-text">Rejoignez notre communauté et accédez à des opportunités uniques.</p>
+        </div>
       </div>
     </div>
-  </template>
+  </div>
+</template>
 
   <style scoped>
   :root {
