@@ -12,53 +12,56 @@ const isSubmitting = ref(false)
 const error = ref('')
 
 const submitForm = async (e: Event) => {
-    error.value = ''
-    isSubmitting.value = true
+  e.preventDefault()
+  errorMessageLogin.value = ''
+  error.value = ''
+  isSubmitting.value = true
 
-    try {
-        e.preventDefault()
-        errorMessageLogin.value = ''
+  if (!email.value || !password.value) {
+    errorMessageLogin.value = 'Veuillez compléter tous les champs.'
+    isSubmitting.value = false
+    return
+  }
 
-        const response = await fetch('http://localhost:3000/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: email.value, pass: password.value })
-        })
+  try {
+    const response = await fetch('http://localhost:3000/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: email.value,
+        pass: password.value,
+      }),
+    })
 
-        if (response.ok) {
-            const result = await response.json()
-            if (result && result.access_token) {
-                localStorage.setItem('access_token', result.access_token)
-                if (rememberMe.value) {
-                    localStorage.setItem('user_email', email.value)
-                    localStorage.setItem('userLoggedIn', 'true')
-                } else {
-                    localStorage.removeItem('user_email')
-                    localStorage.removeItem('userLoggedIn')
-                }
-                router.push('/')
-            }
-        } else if (email.value === '' || password.value === '') {
-            errorMessageLogin.value = 'Veuillez completer le formulaire'
-        } else if (response.status === 401 || 404) {
-            errorMessageLogin.value = 'Email ou mot de passe incorrect.'
-            router.push('/login')
-        } else {
-            errorMessageLogin.value = "Une erreur s'est produite lors de la connexion."
-            router.push('/login')
-        }
-    } catch (err) {
-        if (err instanceof Error) {
-            error.value = err.message
-        } else {
-            error.value = 'Une erreur est survenue lors de la connexion'
-        }
-        console.error(err)
-        errorMessageLogin.value = "Une erreur s'est produite lors de la connexion."
-        router.push('/login')
-    } finally {
-        isSubmitting.value = false
+    const result = await response.json()
+
+    if (response.ok && result.access_token) {
+      localStorage.setItem('access_token', result.access_token)
+
+      if (rememberMe.value) {
+        localStorage.setItem('user_email', email.value)
+        localStorage.setItem('userLoggedIn', 'true')
+      } else {
+        localStorage.removeItem('user_email')
+        localStorage.removeItem('userLoggedIn')
+      }
+
+      router.push('/')
+    } else if (response.status === 401 || response.status === 404) {
+      errorMessageLogin.value = result?.message || 'Email ou mot de passe incorrect.'
+    } else {
+      errorMessageLogin.value = result?.message || "Une erreur s'est produite lors de la connexion."
     }
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      error.value = err.message
+    } else {
+      error.value = 'Une erreur inconnue est survenue.'
+    }
+    errorMessageLogin.value = "Impossible de se connecter. Veuillez réessayer plus tard."
+  } finally {
+    isSubmitting.value = false
+  }
 }
 </script>
 
@@ -107,8 +110,8 @@ const submitForm = async (e: Event) => {
                             </label>
                         </div>
 
-                        <div v-if="error" class="error-message">
-                            {{ error }}
+                        <div v-if="errorMessageLogin" class="error-message">
+                            {{ errorMessageLogin }}
                         </div>
 
                         <button type="submit" class="btn btn-primary login-btn" :disabled="isSubmitting">

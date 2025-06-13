@@ -20,7 +20,7 @@ export class AuthService {
     constructor(
         private usersService: UserService,
         private jwtService: JwtService,
-    ) {}
+    ) { }
 
     async authentication(
         signInDto: SignInDto,
@@ -29,7 +29,7 @@ export class AuthService {
 
         if (!email || !pass) {
             throw new HttpException(
-                '__The Email or Password is missing',
+                'L\'adresse e-mail ou le mot de passe est manquant.',
                 HttpStatus.BAD_REQUEST,
             );
         }
@@ -41,7 +41,7 @@ export class AuthService {
             if (loginInfo.attempts >= this.MAX_ATTEMPTS && now - loginInfo.lastAttempt < this.BLOCK_DURATION) {
                 const remaining = Math.ceil((this.BLOCK_DURATION - (now - loginInfo.lastAttempt)) / 1000,);
                 throw new ForbiddenException(
-                    `Too many failed attempts. Please try again in ${remaining} seconds.`,
+                    `Trop de tentatives échouées. Veuillez réessayer dans ${remaining} secondes.`,
                 );
             }
         }
@@ -58,7 +58,7 @@ export class AuthService {
                 this.loginAttempts.set(email, { attempts: 1, lastAttempt: now });
             }
 
-            throw new UnauthorizedException('__Wrong password');
+            throw new UnauthorizedException('Mot de passe incorrect.');
         }
 
         this.loginAttempts.delete(email);

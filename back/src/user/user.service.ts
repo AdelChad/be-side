@@ -45,7 +45,7 @@ export class UserService {
       return user
     }
 
-    throw new HttpException(`__The user with email: ${email} was not found`, HttpStatus.NOT_FOUND)
+    throw new HttpException(`Aucun utilisateur trouvé avec l'email : ${email}`, HttpStatus.NOT_FOUND);
   }
 
   async create(createUserDto: UserCreateDto) {
