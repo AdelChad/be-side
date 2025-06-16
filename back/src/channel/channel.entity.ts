@@ -1,3 +1,4 @@
+import { Clash } from "src/clash/clash.entity";
 import { Groupe } from "src/groupe/groupe.entity";
 import { Message } from "src/message/message.entity";
 import { User } from "src/user/user.entity";
@@ -17,4 +18,7 @@ export class Channel extends BaseEntity {
 
     @OneToMany(() => Message, message => message.channel)
     messages: Message[];
+
+    @OneToMany(() => Clash, clash => clash.channel)
+    clashes: Clash[];
 }

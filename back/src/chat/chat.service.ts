@@ -1,11 +1,17 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { User } from 'src/user/user.entity'; // à adapter selon ton architecture
 import { Message } from 'src/message/message.entity';
 import { Channel } from 'src/channel/channel.entity';
 import { Planning } from 'src/planning/planning.entity';
 import { ActivityDay } from 'src/activity_day/activity-day.entity';
+import { CreateClashDto } from 'src/clash/dto/create-clash.dto';
+import { Clash } from 'src/clash/clash.entity';
+import { Activities } from 'src/activities/activities.entity';
+import { Restaurant } from 'src/restaurant/restaurant.entity';
+import { Vote } from 'src/vote/vote.entity';
+import { VoteDto } from 'src/clash/dto/create-vote.dto';
 
 @Injectable()
 export class ChatService {
@@ -21,6 +27,18 @@ export class ChatService {
 
         @InjectRepository(ActivityDay)
         private readonly activityDayRepository: Repository<ActivityDay>,
+                
+        @InjectRepository(Clash)
+        private clashRepository: Repository<Clash>,
+
+        @InjectRepository(Vote)
+        private voteRepository: Repository<Vote>,
+
+        @InjectRepository(Activities)
+        private activitiesRepository: Repository<Activities>,
+        
+        @InjectRepository(Restaurant)
+        private restaurantRepository: Repository<Restaurant>,
     ) {}
 
     async saveMessage(channelId: number, content: string, client: User): Promise<Message> {
@@ -75,5 +93,139 @@ export class ChatService {
         }
 
         return activityDay;
+    }
+
+    async getClashsByChannel(channelId: number){
+        const channel = await this.channelRepository.findOne({
+            where: { id: channelId },
+            relations: ['clashes'],
+        });
+
+        if (!channel || !channel.clashes) {
+            throw new NotFoundException('Channel or clashes not found');
+        }
+
+        const clashes = await this.clashRepository.find({
+            where: { channel: { id: channel.id } },
+            relations: ['creator', 'activityOptionA', 'activityOptionB', 'restaurantOptionA', 'restaurantOptionB', 'votes', 'channel'],
+        });
+
+        if (!clashes || clashes.length === 0) {
+            throw new NotFoundException('Clashes not found for this group');
+        }
+
+        const clashIds = clashes.map(c => c.id)
+
+        const votes = await this.voteRepository.find({
+            where: {
+                clash: {
+                id: In(clashIds)
+                }
+            },
+            relations: ['user', 'clash'],
+        });
+
+        const votesByClashId = clashIds.reduce((acc, id) => {
+            acc[id] = votes.filter(vote => vote.clash.id === id);
+            return acc;
+        }, {} as Record<number, Vote[]>);
+
+        const clashesWithVotes = clashes.map(clash => ({
+        ...clash,
+        votes: votesByClashId[clash.id] || []
+        }));
+
+        return clashesWithVotes;
+    }
+
+    async createClash(createClashDto: CreateClashDto, creator: User): Promise<Clash> {
+        const { channelId, optionAId, optionBId, type } = createClashDto;
+
+        const channel = await this.channelRepository.findOne({
+            where: { id: channelId },
+            relations: ['groupe', 'groupe.members', 'groupe.creator'],
+        });
+
+        if (!channel) throw new NotFoundException('Channel not found');
+
+        const groupe = channel.groupe;
+        const isCreator = groupe.creator.id === creator.id;
+        const isMember = groupe.members.some(member => member.id === creator.id);
+
+        if (!isCreator && !isMember) {
+            throw new ForbiddenException("You are not authorized to create a clash in this groupe.");
+        }
+
+        const clash = new Clash();
+        clash.creator = creator;
+        clash.channel = channel;
+
+        if (type === 'activity') {
+            const [activityA, activityB] = await Promise.all([
+                this.activitiesRepository.findOne({ where: { id: optionAId } }),
+                this.activitiesRepository.findOne({ where: { id: optionBId } })
+            ]);
+
+            if (!activityA || !activityB) throw new NotFoundException('Activity not found');
+
+            clash.activityOptionA = activityA;
+            clash.activityOptionB = activityB;
+
+        } else if (type === 'restaurant') {
+            const [restaurantA, restaurantB] = await Promise.all([
+            this.restaurantRepository.findOne({ where: { id: optionAId } }),
+            this.restaurantRepository.findOne({ where: { id: optionBId } }),
+            ]);
+
+            if (!restaurantA || !restaurantB) throw new NotFoundException('Restaurant not found');
+
+            clash.restaurantOptionA = restaurantA;
+            clash.restaurantOptionB = restaurantB;
+
+        } else {
+            throw new BadRequestException('Invalid clash type');
+        }
+
+        await clash.save();
+        return clash;
+    }
+
+    async submitVote(voteDto: VoteDto, user: User): Promise<Vote> {
+        const { clashId, option } = voteDto;
+
+        const clash = await this.clashRepository.findOne({
+            where: { id: clashId },
+            relations: ['channel', 'channel.groupe', 'channel.groupe.members', 'channel.groupe.creator'],
+        });
+
+        if (!clash) {
+            throw new NotFoundException('Clash not found');
+        }
+
+        const group = clash.channel.groupe;
+        const isCreator = group.creator.id === user.id;
+        const isMember = group.members.some(member => member.id === user.id);
+
+        if (!isCreator && !isMember) {
+            throw new ForbiddenException("You are not authorized to vote on this clash.");
+        }
+
+        const existingVote = await this.voteRepository.findOne({
+            where: {
+                clash: { id: clashId },
+                user: { id: user.id },
+            },
+        });
+
+        if (existingVote) {
+            throw new ConflictException('You have already voted on this clash.');
+        }
+
+        const vote = new Vote();
+        vote.clash = clash;
+        vote.option = option;
+        vote.user = user;
+
+        return await vote.save();
     }
 }
