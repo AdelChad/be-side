@@ -1,53 +1,87 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { jwtDecode } from 'jwt-decode'
-import { selectedGroupId } from '../../stores/chat'
+  import { ref, computed, onMounted } from 'vue'
+  import { jwtDecode } from 'jwt-decode'
+  import { selectedGroupId } from '../../stores/chat'
 
-const searchQuery = ref('')
-const chats = ref([])
+  const newGroupe = ref('')
+  const chats = ref([])
+  const searchQuery = ref('')
+  const token = localStorage.getItem('access_token')
 
-const token = localStorage.getItem('access_token')
-let userId = null
+  let userId = null
 
-if (token) {
-  try {
-    const decoded = jwtDecode(token)
-    userId = decoded.sub
-  } catch (e) {
-    console.error('Token invalide ou corrompu', e)
-  }
-}
-
-onMounted(async () => {
-  if (!token) return
-
-  try {
-    const response = await fetch(`http://localhost:3000/groupe`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      }
-    })
-
-    if (!response.ok) {
-      throw new Error(`Erreur ${response.status}`)
+  if (token) {
+    try {
+      const decoded = jwtDecode(token)
+      userId = decoded.sub
+    } catch (e) {
+      console.error('Token invalide ou corrompu', e)
     }
-
-    const data = await response.json()
-    chats.value = data.map(groupe => ({
-      id: groupe.id,
-      name: groupe.groupeName,
-    }))
-  } catch (error) {
-    console.error('Erreur lors de la récupération des groupes :', error)
   }
-})
 
-const filteredChats = computed(() =>
-  chats.value.filter(chat =>
-    chat.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+  async function createGroupe() {
+    if (newGroupe.value.trim() === '') return
+
+    try {
+      const response = await fetch('http://localhost:3000/groupe/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          groupeName: newGroupe.value,
+          users: []
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`Erreur ${response.status}`)
+      }
+
+      const created = await response.json()
+
+      chats.value.push({
+        id: created.id,
+        name: created.groupeName
+      })
+
+      newGroupe.value = ''
+    } catch (error) {
+      console.error('Erreur lors de la création du groupe :', error)
+    }
+  }
+
+  onMounted(async () => {
+    if (!token) return
+
+    try {
+      const response = await fetch(`http://localhost:3000/groupe`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`Erreur ${response.status}`)
+      }
+
+      const data = await response.json()
+      chats.value = data.map(groupe => ({
+        id: groupe.id,
+        name: groupe.groupeName,
+      }))
+    } catch (error) {
+      console.error('Erreur lors de la récupération des groupes :', error)
+    }
+  })
+
+  const filteredChats = computed(() =>
+    chats.value.filter(chat =>
+      chat.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+    )
   )
-)
 </script>
 
 <template>
@@ -55,11 +89,14 @@ const filteredChats = computed(() =>
     <div class="sidebar-header">
       <input
         type="text"
-        placeholder="Rechercher un chat..."
+        v-model="newGroupe"
+        @keyup.enter="createGroupe"
+        placeholder="Nom du nouveau groupe"
         class="search-input"
-        v-model="searchQuery"
       />
+      <button @click="createGroupe">Créer</button>
     </div>
+
     <div
       v-for="chat in filteredChats"
       :key="chat.id"
