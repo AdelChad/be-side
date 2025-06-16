@@ -69,12 +69,12 @@ export class GroupeService {
     
         if (!groupe) return;
     
-        const currentMemberIds = new Set(groupe.members.map(member => member.id));
+        const currentMemberIds = new Set(groupe.members.map(member => member.email));
     
         for (const user of users) {
-            if (!currentMemberIds.has(user.id)) {
+            if (!currentMemberIds.has(user.email)) {
                 const userFind = await this.userRepository.findOne({
-                    where: { id: user.id },
+                    where: { email: user.email },
                 });
                 groupe.members.push(userFind);
             }
@@ -96,7 +96,7 @@ export class GroupeService {
         if (!groupe) return;
     
         groupe.members = groupe.members.filter(
-            member => !users.some(userToRemove => userToRemove.id === member.id)
+            member => !users.some(userToRemove => userToRemove.email === member.email)
         );
     
         await groupe.save();

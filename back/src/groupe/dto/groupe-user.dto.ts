@@ -3,9 +3,6 @@ import { IsArray, IsNotEmpty, IsNumber, IsString, ValidateNested } from "class-v
 
 class UserMinimalDto {
     @IsNotEmpty()
-    id: number;
-  
-    @IsNotEmpty()
     @IsString()
     email: string;
 }
