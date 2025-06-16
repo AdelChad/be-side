@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Like, Repository } from 'typeorm';
+import { In, Like, Repository } from 'typeorm';
 import { User } from './user.entity';
 import { Activities } from 'src/activities/activities.entity';
 import { Restaurant } from 'src/restaurant/restaurant.entity';
@@ -123,26 +123,55 @@ export class UserService {
   }
 
   async searchActivitiesRestaurant(searchActivityRestaurant: SearchActivityRestaurantDto, user: User): Promise<{ activities: Activities[]; restaurants: Restaurant[] }> {
-    const { search, city, type } = searchActivityRestaurant;
+    const { search, city, tags, type } = searchActivityRestaurant;
     const cityRecovered = city?.trim() || user.city?.trim();
+
+    const hasSearch = search && search.trim() !== '';
+    const hasTags = tags && (Array.isArray(tags) ? tags.length > 0 : true);
+
+    if (!hasSearch && !hasTags) {
+      throw new BadRequestException(
+        'Veuillez renseigner un champ de recherche ou une catégorie.'
+      );
+    }
 
     if (!cityRecovered) {
       throw new BadRequestException('Aucune ville disponible pour la recherche');
     }
 
     const geocodeAddress = await this.googleApi.getAddresseGeocode(cityRecovered);
-    const filters = search ? { name: Like(`%${search}%`) } : {};
-
     const activities: Activities[] = [];
     const restaurants: Restaurant[] = [];
 
+    const tagArray = Array.isArray(tags) ? tags : tags ? [tags] : [];
+
     if (!type || type === 'restaurant') {
-      const foundRestaurants = await this.restaurantsRepository.find({ where: filters });
+      const where: any = {};
+      if (search) where.name = Like(`%${search}%`);
+      if (tagArray.length > 0) {
+        where.categRestau = { name: In(tagArray) };
+      }
+
+      const foundRestaurants = await this.restaurantsRepository.find({
+        where,
+        relations: ['categRestau'],
+      });
+
       restaurants.push(...foundRestaurants.filter(r => this.trigonometrie.distance(geocodeAddress, r)));
     }
 
     if (!type || type === 'activity') {
-      const foundActivities = await this.activitiesRepository.find({ where: filters });
+      const where: any = {};
+      if (search) where.name = Like(`%${search}%`);
+      if (tagArray.length > 0) {
+        where.categActiv = { name: In(tagArray) };
+      }
+
+      const foundActivities = await this.activitiesRepository.find({
+        where,
+        relations: ['categActiv'],
+      });
+
       activities.push(...foundActivities.filter(a => this.trigonometrie.distance(geocodeAddress, a)));
     }
 

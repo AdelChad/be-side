@@ -9,6 +9,9 @@ export class SearchActivityRestaurantDto {
     @IsOptional()
     city: string;
 
+    @IsOptional()
+    tags: string[];
+
     @IsString()
     @IsOptional()
     @IsIn(['restaurant', 'activity'])
