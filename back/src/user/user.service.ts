@@ -122,10 +122,7 @@ export class UserService {
     return this.userRepository.save(user);
   }
 
-  async searchActivitiesRestaurant(
-    searchActivityRestaurant: SearchActivityRestaurantDto,
-    user: User
-  ): Promise<{ activities: Activities[]; restaurants: Restaurant[] }> {
+  async searchActivitiesRestaurant(searchActivityRestaurant: SearchActivityRestaurantDto, user: User): Promise<{ activities: Activities[]; restaurants: Restaurant[] }> {
     const { search, city, type } = searchActivityRestaurant;
     const cityRecovered = city?.trim() || user.city?.trim();
 
