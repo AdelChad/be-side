@@ -101,7 +101,7 @@
       v-for="chat in filteredChats"
       :key="chat.id"
       class="chat-item"
-      @click="selectedGroupId.value = chat.id"
+      @click="selectedGroupId = chat.id"
     >
       <div class="chat-name">{{ chat.name }}</div>
     </div>
