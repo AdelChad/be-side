@@ -8,6 +8,11 @@
   const newMessage = ref('')
   const messages = ref([])
   const planning = ref([])
+  const clashes = ref([])
+  const optionAId = ref('')
+  const optionBId = ref('')
+  const clashId = ref('')
+  const option = ref('')
   const token = localStorage.getItem('access_token')
 
   let userId = null
@@ -28,21 +33,15 @@
     socket.emit('joinChannel', { channelId })
     socket.emit('getMessages', { channelId })
     socket.emit('getPlanning', { channelId })
+    socket.emit('getClashes', { channelId })
     messages.value = []
+    clashes.value = []
   }
 
   watch(selectedGroupId, (newGroupId) => {
     if (newGroupId) {
       joinChannel(newGroupId)
     }
-  })
-
-  socket.on('newMessage', (message) => {
-    messages.value.push({
-      content: message.content,
-      sent: message.author.id === userId,
-      timestamp: new Date(message.createdAt).toLocaleTimeString()
-    })
   })
 
   socket.on('channelMessages', (fetchedMessages) => {
@@ -54,9 +53,31 @@
     }))
   })
 
+  socket.on('channelClashes', (fetchedClashes) => {
+    clashes.value = fetchedClashes.map(clash => ({
+      creator: clash.creator?.firstName || 'Unknown',
+      activityOptionA: clash.activityOptionA?.name || null,
+      activityOptionB: clash.activityOptionB?.name || null,
+      restaurantOptionA: clash.restaurantOptionA?.name || null,
+      restaurantOptionB: clash.restaurantOptionB?.name || null,
+      timestamp: new Date(clash.createdAt).toLocaleTimeString()
+    }));
+    console.log(clashes.value);
+    
+  })
+
   socket.on('channelPlanning', (fetchedPlanning) => {
     planning.value = fetchedPlanning
   })
+
+  socket.on('newMessage', (message) => {
+    messages.value.push({
+      content: message.content,
+      sent: message.author.id === userId,
+      timestamp: new Date(message.createdAt).toLocaleTimeString()
+    })
+  })
+
 
   onBeforeUnmount(() => {
     socket.disconnect()
@@ -77,6 +98,33 @@
     })
 
     newMessage.value = ''
+  }
+
+  function createClash() {
+    if (optionAId.value === '' || optionBId.value === '' || !selectedGroupId.value) return
+
+    const payload = {
+      channelId: selectedGroupId.value,
+      optionAId: optionAId.value,
+      optionBId: optionBId.value,
+      type: 'activity',
+    };
+
+    socket.emit('createClash', { createClashDto: payload });
+
+    optionAId.value = ''
+    optionBId.value = ''
+  }
+
+  function sendVote() {
+    if (clashId.value === '' || option.value === '') return
+
+    const payload = {
+      clashId: clashId.value,
+      option: option.value,
+    };
+
+    socket.emit('submiteVote', { voteDto: payload });
   }
 
   function formatDate(date) {
@@ -133,6 +181,38 @@
           placeholder="Écrivez votre message..."
         />
         <button @click="sendMessage">Envoyer</button>
+      </div>
+      <div class="chat-input">
+        <input
+          type="number"
+          v-model="optionAId"
+          @keyup.enter="createClash"
+          placeholder="ID activité 1"
+        />
+         <input
+          type="number"
+          v-model="optionBId"
+          @keyup.enter="createClash"
+          placeholder="ID activité 2"
+        />
+        <button @click="createClash">Clash !</button>
+      </div>
+    </div>
+    <div>
+      <div class="chat-input">
+        <input
+          type="number"
+          v-model="clashId"
+          @keyup.enter="sendVote"
+          placeholder="clash ID"
+        />
+         <input
+          type="texte"
+          v-model="option"
+          @keyup.enter="sendVote"
+          placeholder="Option A | B"
+        />
+        <button @click="sendVote">Voter !</button>
       </div>
     </div>
   </div>

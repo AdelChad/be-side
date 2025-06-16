@@ -12,6 +12,8 @@ import { Planning } from 'src/planning/planning.entity';
 import { CategActiv } from 'src/categ_activ/categ_activ.entity';
 import { Restaurant } from 'src/restaurant/restaurant.entity';
 import { CategRestau } from 'src/categ_restau/categ_restau.entity';
+import { Clash } from 'src/clash/clash.entity';
+import { Vote } from 'src/vote/vote.entity';
 
 require('dotenv').config();
 
@@ -24,7 +26,7 @@ require('dotenv').config();
         username: configService.getOrThrow('DB_USERNAME'),
         password: configService.getOrThrow('DB_PASSWORD'),
         database: configService.getOrThrow('DB_NAME'),
-        entities: [ActivityDay, Activities, User, Planning, CategActiv, Groupe, Message, Channel, Restaurant, CategRestau],
+        entities: [ActivityDay, Activities, User, Planning, CategActiv, Groupe, Message, Channel, Restaurant, CategRestau, Clash, Vote],
         migrations: ['dist/migrations/**/*.js'],
         synchronize: false,
         logging: false,

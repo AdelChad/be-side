@@ -1,14 +1,18 @@
+import { Exclude } from 'class-transformer';
 import { Activities } from 'src/activities/activities.entity';
+import { Clash } from 'src/clash/clash.entity';
 import { Role } from 'src/enum/role.enum';
 import { Groupe } from 'src/groupe/groupe.entity';
 import { Message } from 'src/message/message.entity';
 import { Planning } from 'src/planning/planning.entity';
 import { Restaurant } from 'src/restaurant/restaurant.entity';
+import { Vote } from 'src/vote/vote.entity';
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany, JoinTable } from 'typeorm';
 
 @Entity()
 export class User {
     @PrimaryGeneratedColumn()
+    @Exclude()
     id: number;
 
     @Column()
@@ -18,9 +22,11 @@ export class User {
     lastName: string
 
     @Column()
+    @Exclude()
     phoneNumber: string
 
     @Column()
+    @Exclude()
     password: string
 
     @Column()
@@ -39,6 +45,7 @@ export class User {
     dateJoined: Date;
 
     @Column({ type: 'enum', enum: Role, default: Role.User })
+    @Exclude()
     role: Role;
 
     @Column({ nullable: true })
@@ -63,4 +70,10 @@ export class User {
     @ManyToMany(() => Restaurant, restaurant => restaurant.favorits, { cascade: true })
     @JoinTable()
     favoritsRestaurants: Restaurant[];
+
+    @OneToMany(() => Clash, clash => clash.creator)
+    clashes: Clash[];
+
+    @OneToMany(() => Vote, vote => vote.user)
+    votes: Vote[];
 }
