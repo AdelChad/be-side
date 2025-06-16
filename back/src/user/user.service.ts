@@ -126,15 +126,6 @@ export class UserService {
     const { search, city, tags, type } = searchActivityRestaurant;
     const cityRecovered = city?.trim() || user.city?.trim();
 
-    const hasSearch = search && search.trim() !== '';
-    const hasTags = tags && (Array.isArray(tags) ? tags.length > 0 : true);
-
-    if (!hasSearch && !hasTags) {
-      throw new BadRequestException(
-        'Veuillez renseigner un champ de recherche ou une catégorie.'
-      );
-    }
-
     if (!cityRecovered) {
       throw new BadRequestException('Aucune ville disponible pour la recherche');
     }
