@@ -27,20 +27,6 @@ export class RestaurantController {
         return this.restaurantsService.restaurantsByCateg(categRestauName);
     }
 
-    @UseGuards(AuthGuard)
-    @Roles(['user'])
-    @Post('filter')
-    async filterRestaurants(
-        @Body() filterDto: FilterRestaurantsDto,
-        @Req() request
-    ): Promise<Array<Restaurant> | HttpException> {
-        const userRequest: UserRequest = request.user;
-        const user = await this.userService.findOne(userRequest.email);
-
-        return this.restaurantsService.filterRestaurants(filterDto, user);
-    }
-
-
     @Get("carrousel")
     async restaurantsForCarrousel(@Req() request): Promise<Array<Restaurant> | HttpException> {
         return this.restaurantsService.RestaurantsMainCity();

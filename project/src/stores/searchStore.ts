@@ -16,7 +16,7 @@ export const useSearchStore = defineStore('search', () => {
     const loading = ref(false)
     const error = ref<string | null>(null)
 
-    async function fetchSearchResults(search: string, city: string, type: string) {
+    async function fetchSearchResults(search: string, city: string, tags: string[], type: string) {
         console.log('fetchSearchResults called with:', { search, city, type })
         loading.value = true
         error.value = null
@@ -32,7 +32,7 @@ export const useSearchStore = defineStore('search', () => {
                 body: JSON.stringify({
                     search: search,
                     city: city,
-                    tags: [],
+                    tags: tags,
                     type: type
                 })
             });
