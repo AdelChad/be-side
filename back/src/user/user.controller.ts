@@ -65,7 +65,7 @@ export class UserController {
 
   @UseGuards(AuthGuard)
   @Roles(['user'])
-  @Get('search_activities_restaurant')
+  @Post('search_activities_restaurant')
   async searchActivityRestaurant(@Body() searchActivityRestaurant: SearchActivityRestaurantDto, @Req() request): Promise<{ activities: Activities[]; restaurants: Restaurant[] }> {
     const userRequest: UserRequest = request.user;
     const user = await this.userService.findOne(userRequest.email);
