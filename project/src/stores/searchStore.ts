@@ -22,17 +22,20 @@ export const useSearchStore = defineStore('search', () => {
         error.value = null
         results.value = []
 
-        const params = new URLSearchParams()
-        if (search) params.append('search', search)
-        if (city) params.append('city', city)
-        if (type) params.append('type', type)
-
         try {
-            const response = await fetch(`http://localhost:3000/users/search_activities_restaurant?${params.toString()}`, {
+            const response = await fetch(`http://localhost:3000/users/search_activities_restaurant`, {
+                method: 'POST',
                 headers: {
+                    'Content-Type': 'application/json',
                     Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-                }
-            })
+                },
+                body: JSON.stringify({
+                    search: search,
+                    city: city,
+                    tags: [],
+                    type: type
+                })
+            });
 
             if (!response.ok) throw new Error(`Erreur HTTP ${response.status}`)
 
