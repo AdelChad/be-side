@@ -16,5 +16,5 @@
 </template>
 
 <style scoped>
-@import 'src/assets/styles/StaticPageStyle.css';
+@import '../../assets/styles/StaticPageStyle.css';
 </style>
