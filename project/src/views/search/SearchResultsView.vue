@@ -15,11 +15,12 @@ const tags = computed(() => (route.query.tags ? (route.query.tags as string).spl
 watchEffect(() => {
     const search = route.query.search as string || ''
     const city = route.query.city as string || ''
+    const tags = route.query.tags as string[] || ''
     const type = route.query.type as 'activity' | 'restaurant'
 
     if (!search && !city && !type) return
 
-    searchStore.fetchSearchResults(search, city, type)
+    searchStore.fetchSearchResults(search, city, tags, type)
 })
 
 const resultsList = computed(() => {

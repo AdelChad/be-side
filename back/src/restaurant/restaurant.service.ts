@@ -48,25 +48,6 @@ export class RestaurantService {
         return arrayRestaurant;
     }
 
-    async filterRestaurants(dto: FilterRestaurantsDto, user: User): Promise<Restaurant[]> {
-        const { cities, tags } = dto;
-
-        const query = this.restaurantRepository.createQueryBuilder('restaurant')
-            .leftJoinAndSelect('restaurant.categRestau', 'categRestau');
-
-        if (cities && cities.length > 0) {
-            query.andWhere('restaurant.city IN (:...cities)', { cities });
-        }
-
-        if (tags && tags.length > 0) {
-            query.andWhere('categRestau.name IN (:...tags)', { tags });
-        }
-
-        const results = await query.getMany();
-        return results;
-    }
-
-
     async RestaurantsMainCity(): Promise<Array<Restaurant>> {
         try {
             let restaurants: Array<Restaurant> = []

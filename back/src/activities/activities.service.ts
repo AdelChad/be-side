@@ -88,28 +88,6 @@ export class ActivitiesService {
         return arrayActivities;
     }
 
-    async filterActivities(dto: FilterActivitiesDto, user: User): Promise<Activities[]> {
-    const { cities, tags } = dto;
-
-    const query = this.activitiesRepository
-        .createQueryBuilder('activity')
-        .leftJoinAndSelect('activity.categActiv', 'categActiv');
-
-    if (cities && cities.length > 0) {
-        query.andWhere('activity.city IN (:...cities)', { cities });
-    }
-
-    if (tags && tags.length > 0) {
-        query.andWhere('categActiv.name IN (:...tags)', { tags });
-    }
-
-    query.orderBy('activity.rating', 'DESC');
-
-    return await query.getMany();
-    }
-
-
-
     async activitiesMainCity(): Promise<Array<Activities>> {
         try {
             let activities: Array<Activities> = []

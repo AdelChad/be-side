@@ -29,20 +29,6 @@ export class ActivitiesController {
         return this.activitiesService.activitiesByCateg(categActivName);
     }
 
-    @UseGuards(AuthGuard)
-    @Roles(['user'])
-    @Post('filter')
-    async filterActivities(
-        @Body() filterDto: FilterActivitiesDto,
-        @Req() request
-    ): Promise<Array<Activities> | HttpException> {
-        const userRequest: UserRequest = request.user
-        const user = await this.userService.findOne(userRequest.email)
-
-        return this.activitiesService.filterActivities(filterDto, user);
-    }
-
-
     @Get("carrousel")
     async activitiesForCarrousel(@Req() request): Promise<Array<Activities> | HttpException> {
         return this.activitiesService.activitiesMainCity();

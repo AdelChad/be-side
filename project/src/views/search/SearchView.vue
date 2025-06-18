@@ -151,69 +151,42 @@
     function selectType(type: 'restaurant' | 'activity') {
         searchType.value = type
     }
-async function nextStep() {
-    // Si on est encore dans les étapes initiales, on avance simplement
-   if (activeStep.value === 0 && !searchType.value) {
-        console.error("Aucun type sélectionné.");
-        return;
-    }
 
-    if (activeStep.value < steps.length - 1) {
-        activeStep.value++;
-        return;
-    }
-
-    const isActivity = searchType.value === 'activity';
-
-    // Récupère les villes sélectionnées
-    const selectedCities = cities.value
-        .filter(city => city.selected)
-        .map(city => city.city);
-
-    // Récupère les tags sélectionnés selon le type
-    const selectedTags = (isActivity ? activitiesTags.value : restaurantsTags.value)
-        .filter(tag => tag.selected)
-        .map(tag => tag.name);
-
-    const requestBody = {
-        cities: selectedCities,
-        tags: selectedTags
-    };
-
-    try {
-        const endpoint = isActivity ? 'activities' : 'restaurants';
-        const response = await fetch(`http://localhost:3000/${endpoint}/filter`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(requestBody)
-        });
-
-        if (!response.ok) {
-            throw new Error(`Erreur API: ${response.statusText}`);
+    async function nextStep() {
+    if (activeStep.value === 0 && !searchType.value) {
+            console.error("Aucun type sélectionné.");
+            return;
         }
 
-        const results = await response.json();
-        console.log('Résultats filtrés:', results);
+        if (activeStep.value < steps.length - 1) {
+            activeStep.value++;
+            return;
+        }
 
-        // Redirection vers la page des résultats
-        router.push({
-            name: 'search-results',
-            query: {
-                type: searchType.value,
-                tags: selectedTags.join(','),
-                cities: selectedCities.join(',')
-            }
-        });
+        const isActivity = searchType.value === 'activity';
 
-    } catch (error) {
-        console.error('Erreur lors de la récupération des résultats :', error);
+        const selectedCities = cities.value
+            .filter(city => city.selected)
+            .map(city => city.city);
+
+        const selectedTags = (isActivity ? activitiesTags.value : restaurantsTags.value)
+            .filter(tag => tag.selected)
+            .map(tag => tag.name);
+
+        try {
+            router.push({
+                name: 'search-results',
+                query: {
+                    search: '',
+                    type: searchType.value,
+                    tags: selectedTags.join(','),
+                    city: selectedCities.join(',')
+                }
+            });
+        } catch (error) {
+            console.error('Erreur lors de la récupération des résultats :', error);
+        }
     }
-}
-
-
 
     function toggleTag(tagId: number, tagType: string | void) {
         if (tagType == "activity") {
