@@ -578,6 +578,11 @@ function removeFavorite(id: number, type: 'activity' | 'restaurant') {
     align-items: center;
   }
 
+  .user-location {
+    display: flex;
+    justify-content: center;
+  }
+
   .profile-grid {
     grid-template-columns: 1fr;
   }
