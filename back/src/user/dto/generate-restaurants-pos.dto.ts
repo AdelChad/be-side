@@ -10,7 +10,7 @@ export class SearchActivityRestaurantDto {
     city: string;
 
     @IsOptional()
-    tags: string[];
+    tags: string;
 
     @IsString()
     @IsOptional()
