@@ -6,6 +6,10 @@
     import { isAuthenticated } from '../../router/guards'
     import { useUserStore } from '../../stores/user'
     import SearchBar from '../../components/SearchBar.vue'
+    import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+    import { library } from '@fortawesome/fontawesome-svg-core'
+    import { faMessage, faSliders } from '@fortawesome/free-solid-svg-icons'
+    library.add(faMessage, faSliders)
 
     const route = useRoute()
     const isTransparent = computed(() => route.path === '/')
@@ -80,8 +84,18 @@
                 <nav v-if="!route.meta.hideNavbar">
                     <div class="nav">
                         <SearchBar class="search-bar-wrapper" />
-                        <router-link to="/search" class="nav-link">Test</router-link>
-                        <router-link to="/search" class="nav-link">Test</router-link>
+                        <div class="icon-link">
+                        <router-link to="/search" class="nav-link">
+                        <font-awesome-icon :icon="['fas', 'sliders']" />
+                            Personnaliser
+                        </router-link>
+                        </div>
+                        <div class="icon-link">
+                        <router-link to="/conversations" class="nav-link"> 
+                          <font-awesome-icon icon="fa-solid fa-message" />
+                            Messages
+                        </router-link>
+                        </div>
                     </div>
                 </nav>
 
@@ -91,8 +105,8 @@
 
                 <!-- Menu mobile -->
                 <div v-if="mobileMenuOpen" class="mobile-menu" ref="mobileMenuRef">
-                    <router-link to="/search" class="mobile-link" @click="toggleMobileMenu">Recherche</router-link>
-                    <router-link to="/explore" class="mobile-link" @click="toggleMobileMenu">Explorer</router-link>
+                    <router-link to="/search" class="mobile-link" @click="toggleMobileMenu">Personnaliser</router-link>
+                    <router-link to="/conversations" class="mobile-link" @click="toggleMobileMenu">Messages</router-link>
                     <router-link to="/profile" class="mobile-link" @click="toggleMobileMenu">Mon profil</router-link>
 
                     <div v-if="!isAuthenticated()" class="mobile-auth">
@@ -161,6 +175,11 @@
 .nav {
     display: none;
     align-items: center;
+}
+
+.icon-link {
+display: flex;
+text-align: center;
 }
 
 .nav-link {
