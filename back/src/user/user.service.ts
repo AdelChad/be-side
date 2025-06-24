@@ -134,7 +134,7 @@ export class UserService {
     const activities: Activities[] = [];
     const restaurants: Restaurant[] = [];
 
-    const tagArray = Array.isArray(tags) ? tags : tags ? [tags] : [];
+    const tagArray = tags ? tags.split(',').map(tag => tag.trim()) : [];
 
     if (!type || type === 'restaurant') {
       const where: any = {};
@@ -143,10 +143,17 @@ export class UserService {
         where.categRestau = { name: In(tagArray) };
       }
 
-      const foundRestaurants = await this.restaurantsRepository.find({
-        where,
-        relations: ['categRestau'],
-      });
+      const qb = this.restaurantsRepository.createQueryBuilder('restaurant').leftJoinAndSelect('restaurant.categRestau', 'categ').where('1=1');
+
+      if (search) {
+        qb.andWhere('restaurant.name LIKE :search', { search: `%${search}%` });
+      }
+
+      if (tagArray.length > 0) {
+        qb.andWhere('categ.name IN (:...tags)', { tags: tagArray });
+      }
+
+      const foundRestaurants = await qb.getMany();
 
       restaurants.push(...foundRestaurants.filter(r => this.trigonometrie.distance(geocodeAddress, r)));
     }
@@ -158,10 +165,17 @@ export class UserService {
         where.categActiv = { name: In(tagArray) };
       }
 
-      const foundActivities = await this.activitiesRepository.find({
-        where,
-        relations: ['categActiv'],
-      });
+      const qb = this.activitiesRepository.createQueryBuilder('activity').leftJoinAndSelect('activity.categActiv', 'categ').where('1=1');
+
+      if (search) {
+        qb.andWhere('activity.name LIKE :search', { search: `%${search}%` });
+      }
+
+      if (tagArray.length > 0) {
+        qb.andWhere('categ.name IN (:...tags)', { tags: tagArray });
+      }
+
+      const foundActivities = await qb.getMany();
 
       activities.push(...foundActivities.filter(a => this.trigonometrie.distance(geocodeAddress, a)));
     }
