@@ -259,6 +259,9 @@ export class PlanningService {
                         afternoonActivity: true,
                         eveningActivity: true,
                         nightActivity: true,
+                        breakfastRestaurant: true,
+                        lunchRestaurant: true,
+                        dinnerRestaurant: true,
                     },
                 },
             });

@@ -5,8 +5,6 @@ import { Roles } from 'src/decorators/role.decorator';
 import { AuthGuard } from 'src/guard/auth.guard';
 import { UserRequest } from 'src/interface/user-request.interface';
 import { UserService } from 'src/user/user.service';
-import { ActivityDay } from 'src/activity_day/activity-day.entity';
-import { Activities } from 'src/activities/activities.entity';
 import { PlanningCreateDto } from './dto/create-planning.dto';
 import { PlanningUpdateDto } from './dto/modify-planning.dto';
 
@@ -51,10 +49,10 @@ export class PlanningController {
     @UseGuards(AuthGuard)
     @Roles(['user'])
     @Get(':id')
-    async getPlanningById(@Body() id: number, @Req() request): Promise<Planning> {
+    async getPlanningById(@Param('id') id: string, @Req() request): Promise<Planning> {
         const userRequest: UserRequest = request.user
         const user = await this.userService.findOne(userRequest.email)
 
-        return await this.planningService.getPlanningById(id, user);
+        return await this.planningService.getPlanningById(+id, user);
     }
 }
