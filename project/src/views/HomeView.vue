@@ -1,6 +1,7 @@
 <script setup lang="ts">
     import { onMounted, ref } from 'vue'
     import ActivityCard from '../components/activities/ActivityCard.vue'
+    import RestaurantCard from '../components/restaurants/RestaurantCard.vue'
 
     interface Activity {
         id: string
@@ -165,10 +166,10 @@
             <div class="container">
                 <h2 class="section-title">Ne cherchez plus, dégustez !</h2>
                 <div class="grid grid-cols-2 grid-cols-3 grid-cols-4">
-                    <ActivityCard 
+                    <RestaurantCard 
                     v-for="restaurant in restaurants" 
                     :key="restaurant.id" 
-                    :activity="restaurant" 
+                    :restaurant="restaurant" 
                     />
                 </div>
             </div>

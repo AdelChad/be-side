@@ -8,8 +8,8 @@
     import SearchBar from '../../components/SearchBar.vue'
     import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
     import { library } from '@fortawesome/fontawesome-svg-core'
-    import { faMessage, faSliders } from '@fortawesome/free-solid-svg-icons'
-    library.add(faMessage, faSliders)
+    import { faCalendarDays, faMessage, faSliders } from '@fortawesome/free-solid-svg-icons'
+    library.add(faMessage, faSliders, faCalendarDays)
 
     const route = useRoute()
     const isTransparent = computed(() => route.path === '/')
@@ -98,7 +98,7 @@
                         </div>
                         <div class="icon-link">
                         <router-link to="/plannings" class="nav-link"> 
-                          <font-awesome-icon icon="fa-solid fa-message" />
+                          <font-awesome-icon :icon="['fas', 'calendar-days']" />
                             Plannings
                         </router-link>
                         </div>
