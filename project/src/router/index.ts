@@ -15,6 +15,7 @@ import ConditionsUtilisationView from '../views/footer/ConditionsUtilisationView
 import ConfidentialiteView from '../views/footer/ConfidentialiteView.vue'
 import APropos from '../views/footer/APropos.vue'
 import ContactView from '../views/footer/ContactView.vue'
+import RestaurantDetailView from '../views/restaurants/RestaurantDetailView.vue'
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -71,6 +72,12 @@ const router = createRouter({
             name: 'activity-detail',
             component: ActivityDetailView,
             meta: { requiresAuth: true }
+        },
+        {
+        path: '/restaurants/:id',
+        name: 'RestaurantDetail',
+        component: RestaurantDetailView,
+        meta: { requiresAuth: true }
         },
         {
             path: '/mentions-legales',
