@@ -3,8 +3,13 @@ import { ref, watch } from 'vue'
 import { io } from 'socket.io-client'
 import { jwtDecode } from 'jwt-decode'
 import { selectedGroupId } from '../../stores/chat'
+    import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+    import { library } from '@fortawesome/fontawesome-svg-core'
+    import { faCalendarDays, faPlus } from '@fortawesome/free-solid-svg-icons'
+    library.add(faCalendarDays, faPlus)
 
 const token = localStorage.getItem('access_token')
+const planning = ref([])
 const groupName = ref('')
 const newMember = ref('')
 const errorMessage = ref('')
@@ -25,20 +30,45 @@ const socket = io('http://localhost:3000', {
   auth: { token }
 })
 
+  socket.on('channelPlanning', (fetchedPlanning) => {
+    planning.value = fetchedPlanning
+  })
+
 watch(selectedGroupId, (newGroupId) => {
   if (newGroupId) {
-    socket.emit('joinChannel', { channelId: newGroupId })
+    joinChannel(newGroupId)
     groupName.value = ''
     errorMessage.value = ''
     successMessage.value = ''
   }
 })
 
+function formatDate(dateStr) {
+  const date = new Date(dateStr)
+  return date.toLocaleDateString('fr-FR', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })
+}
+
+
+
 socket.on('channelMessages', (fetchedMessages) => {
   if (fetchedMessages.length > 0) {
     groupName.value = fetchedMessages[0].channel.name
   }
 })
+
+ function joinChannel(channelId) {
+    socket.emit('joinChannel', { channelId })
+    socket.emit('getMessages', { channelId })
+    socket.emit('getPlanning', { channelId })
+    socket.emit('getClashes', { channelId })
+    messages.value = []
+    clashes.value = []
+  }
 
 // Validation email simple
 function isValidEmail(email) {
@@ -118,6 +148,12 @@ function clearMessages() {
     successMessage.value = ''
   }
 }
+
+const showPlanning = ref(false)
+
+function toggleOpenPlanning() {
+  showPlanning.value = !showPlanning.value
+}
 </script>
 
 <template>
@@ -127,7 +163,7 @@ function clearMessages() {
     <div class="group-info">
       <div class="name">{{ groupName }}</div>
     </div>
-
+    <div class="button-group">
     <div class="add-member-section">
       <button v-if="!showInput" @click="toggleInput" class="add-btn">
         Ajouter un membre
@@ -143,6 +179,231 @@ function clearMessages() {
           Annuler
         </button>
       </div>
+       <button class="add-btn" @click="toggleOpenPlanning">
+       <font-awesome-icon :icon="['fas', 'calendar-days']" />
+      </button>
+      </div>
+        <!-- Menu Planning flottant -->
+        <div v-if="showPlanning" class="overlay-planning" @click.self="toggleOpenPlanning">
+          <div class="planning-panel">
+            <h2>Planning du groupe</h2>
+           <div v-if="planning.length">
+        <div v-for="day in planning" class="day-card">
+          <h3>{{ formatDate(day.date) }}</h3>
+
+             <ul class="planning-list">
+              <!-- Petit déjeuner -->
+              <li class="planning-step" v-if="day.breakfastRestaurant">
+                <div class="step-marker"></div>
+                <div class="step-content">
+                  <h4>Petit déjeuner</h4>
+                  <div class="image-wrapper">
+                    <router-link :to="`/restaurants/${day.breakfastRestaurant.id}`" class="planning-link">
+                      <img :src="day.breakfastRestaurant.photo" alt="Petit déjeuner" class="planning-photo" />
+                      <div class="overlay-text">{{ day.breakfastRestaurant.name }}<br><span class="city">{{ day.breakfastRestaurant.city }}</span></div>
+                    </router-link>
+                  </div>
+                </div>
+              </li>
+            <li v-else class="planning-step">
+              <div class="step-marker"></div>
+              <div class="step-content">
+                <h4>Petit déjeuner</h4>
+                <div class="image-wrapper">
+                  <router-link to="/" class="planning-placeholder-button">
+                    <font-awesome-icon :icon="['fas', 'plus']" class="fa-plus-icon" />
+                  </router-link>
+                </div>
+              </div>
+            </li>
+
+
+              <!-- Activité du matin -->
+              <li class="planning-step" v-if="day.morningActivity">
+                <div class="step-marker"></div>
+                <div class="step-content">
+                  <h4>Activité du matin</h4>
+                  <div class="image-wrapper">
+                    <router-link :to="`/activities/${day.morningActivity.id}`" class="planning-link">
+                      <img :src="day.morningActivity.photo" alt="Activité du matin" class="planning-photo" />
+                      <div class="overlay-text">{{ day.morningActivity.name }} <br> <span class="city">{{ day.morningActivity.city }}</span></div>
+                    </router-link>
+                  </div>
+                </div>
+              </li>
+               <li v-else class="planning-step">
+              <div class="step-marker"></div>
+              <div class="step-content">
+                <h4>Activité du matin</h4>
+                <div class="image-wrapper">
+                  <router-link to="/" class="planning-placeholder-button">
+                    <font-awesome-icon :icon="['fas', 'plus']" class="fa-plus-icon" />
+                  </router-link>
+                </div>
+              </div>
+            </li>
+
+              <!-- Activité de midi -->
+              <li class="planning-step" v-if="day.noondayActivity">
+                <div class="step-marker"></div>
+                <div class="step-content">
+                  <h4>Activité de midi</h4>
+                  <div class="image-wrapper">
+                    <router-link :to="`/activities/${day.noondayActivity.id}`" class="planning-link">
+                      <img :src="day.noondayActivity.photo" alt="Activité de midi" class="planning-photo" />
+                      <div class="overlay-text">{{ day.noondayActivity.name }}<br> <span class="city">{{ day.noondayActivity.city }}</span></div>
+                    </router-link>
+                  </div>
+                </div>
+              </li>
+                 <li v-else class="planning-step">
+              <div class="step-marker"></div>
+              <div class="step-content">
+                <h4>Activité du midi</h4>
+                <div class="image-wrapper">
+                  <router-link to="/" class="planning-placeholder-button">
+                  <font-awesome-icon :icon="['fas', 'plus']" class="fa-plus-icon" />
+                  </router-link>
+                </div>
+              </div>
+            </li>
+
+              <!-- Déjeuner -->
+              <li class="planning-step" v-if="day.lunchRestaurant">
+                <div class="step-marker"></div>
+                <div class="step-content">
+                  <h4>Déjeuner</h4>
+                  <div class="image-wrapper">
+                    <router-link :to="`/restaurants/${day.lunchRestaurant.id}`" class="planning-link">
+                      <img :src="day.lunchRestaurant.photo" alt="Déjeuner" class="planning-photo" />
+                      <div class="overlay-text">{{ day.lunchRestaurant.name }}<br> <span class="city">{{ day.lunchRestaurant.city }}</span></div>
+                    </router-link>
+                  </div>
+                </div>
+              </li>
+                 <li v-else class="planning-step">
+              <div class="step-marker"></div>
+              <div class="step-content">
+                <h4>Déjeuner</h4>
+                <div class="image-wrapper">
+                  <router-link to="/" class="planning-placeholder-button">
+                    <font-awesome-icon :icon="['fas', 'plus']" class="fa-plus-icon" />
+                  </router-link>
+                </div>
+              </div>
+            </li>
+
+              <!-- Après-midi -->
+              <li class="planning-step" v-if="day.afternoonActivity">
+                <div class="step-marker"></div>
+                <div class="step-content">
+                  <h4>Après-midi</h4>
+                  <div class="image-wrapper">
+                    <router-link :to="`/activities/${day.afternoonActivity.id}`" class="planning-link">
+                      <img :src="day.afternoonActivity.photo" alt="Après-midi" class="planning-photo" />
+                      <div class="overlay-text">{{ day.afternoonActivity.name }}<br> <span class="city">{{ day.afternoonActivity.city }}</span></div>
+                    </router-link>
+                  </div>
+                </div>
+              </li>
+                 <li v-else class="planning-step">
+              <div class="step-marker"></div>
+              <div class="step-content">
+                <h4>Après-midi</h4>
+                <div class="image-wrapper">
+                  <router-link to="/" class="planning-placeholder-button">
+                    <font-awesome-icon :icon="['fas', 'plus']" class="fa-plus-icon" />
+                  </router-link>
+                </div>
+              </div>
+            </li>
+
+              <!-- Soirée -->
+              <li class="planning-step" v-if="day.eveningActivity">
+                <div class="step-marker"></div>
+                <div class="step-content">
+                  <h4>Soirée</h4>
+                  <div class="image-wrapper">
+                    <router-link :to="`/activities/${day.eveningActivity.id}`" class="planning-link">
+                      <img :src="day.eveningActivity.photo" alt="Soirée" class="planning-photo" />
+                      <div class="overlay-text">{{ day.eveningActivity.name }}<br> <span class="city">{{ day.eveningActivity.city }}</span></div>
+                    </router-link>
+                  </div>
+                </div>
+              </li>
+                 <li v-else class="planning-step">
+              <div class="step-marker"></div>
+              <div class="step-content">
+                <h4>Soirée</h4>
+                <div class="image-wrapper">
+                  <router-link to="/" class="planning-placeholder-button">
+                    <font-awesome-icon :icon="['fas', 'plus']" class="fa-plus-icon" />
+                  </router-link>
+                </div>
+              </div>
+            </li>
+
+              <!-- Dîner -->
+              <li class="planning-step" v-if="day.dinnerRestaurant">
+                <div class="step-marker"></div>
+                <div class="step-content">
+                  <h4>Dîner</h4>
+                  <div class="image-wrapper">
+                    <router-link :to="`/restaurants/${day.dinnerRestaurant.id}`" class="planning-link">
+                      <img :src="day.dinnerRestaurant.photo" alt="Dîner" class="planning-photo" />
+                      <div class="overlay-text">{{ day.dinnerRestaurant.name }}<br> <span class="city">{{ day.dinnerRestaurant.city }}</span></div>
+                    </router-link>
+                  </div>
+                </div>
+              </li>
+                <li v-else class="planning-step">
+              <div class="step-marker"></div>
+              <div class="step-content">
+                <h4>Dîner</h4>
+                <div class="image-wrapper">
+                  <router-link to="/" class="planning-placeholder-button">
+                    <font-awesome-icon :icon="['fas', 'plus']" class="fa-plus-icon" />
+                  </router-link>
+                </div>
+              </div>
+            </li>
+
+              <!-- Nuit -->
+              <li class="planning-step" v-if="day.nightActivity">
+                <div class="step-marker"></div>
+                <div class="step-content">
+                  <h4>Nuit</h4>
+                  <div class="image-wrapper">
+                    <router-link :to="`/activities/${day.nightActivity.id}`" class="planning-link">
+                      <img :src="day.nightActivity.photo" alt="Nuit" class="planning-photo" />
+                      <div class="overlay-text">{{ day.nightActivity.name }}<br> <span class="city">{{ day.nightActivity
+                      .city }}</span></div>
+                    </router-link>
+                  </div>
+                </div>
+              </li>
+                <li v-else class="planning-step">
+              <div class="step-marker"></div>
+              <div class="step-content">
+                <h4>Nuit</h4>
+                <div class="image-wrapper">
+                  <router-link to="/" class="planning-placeholder-button">
+                   <font-awesome-icon :icon="['fas', 'plus']" class="fa-plus-icon" />
+                  </router-link>
+                </div>
+              </div>
+            </li>
+            </ul>
+
+
+        </div>
+      </div>
+      <div v-else>
+        <p>Aucun planning disponible.</p>
+      </div>
+            <button class="close-btn" @click="toggleOpenPlanning">Fermer</button>
+          </div>
+        </div>
       <div class="messages-inline">
         <div v-if="errorMessage" class="error-message">
           {{ errorMessage }}
@@ -324,6 +585,144 @@ function clearMessages() {
   color: #155724;
   background-color: #d4edda;
   border: 1px solid #c3e6cb;
+}
+
+.overlay-planning {
+  position: fixed;
+  color:black;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.planning-panel {
+  width: 20rem;
+  height: 100vh; /* <- FIX: pleine hauteur */
+  background: #fff;
+  padding: 30px;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.2);
+  animation: slideInPlanning 0.3s ease-out;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto; /* <- Ajoute le scroll ici */
+}
+
+
+.planning-panel h2 {
+  margin-bottom:1rem;
+  text-align: center;
+}
+
+
+.planning-panel h3 {
+  margin-bottom:1rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.planning-panel ul {
+ list-style: none;
+}
+
+@keyframes slideInPlanning {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.close-btn {
+  margin-top: auto;
+  padding: 10px 20px;
+  background-color: #1a1a1a;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.image-wrapper {
+  position: relative;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.planning-photo {
+  width: 100%;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+}
+
+.overlay-text {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  font-weight: 500;
+  font-size: 14px;
+  border-radius: 0 0 8px 8px;
+}
+
+.planning-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  position: relative;
+}
+
+.planning-link:hover .planning-photo {
+  filter: brightness(0.85);
+  transition: 0.2s;
+}
+
+.planning-link:hover .overlay-text {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+
+.planning-placeholder-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100px;
+  width: 100%;
+  background-color: #f0f0f0;
+  color: #1a1a1a;
+  font-size: 32px;
+  font-weight: bold;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.planning-placeholder-button:hover {
+  background-color: #e0e0e0;
+}
+
+.fa-plus-icon {
+  font-size: 20px;
+  color: #1a1a1a;
+}
+
+.planning-list h4 {
+  font-weight:400;
+}
+
+.city {
+  font-size: small;
+  font-weight: 300;
 }
 
 @media (max-width: 600px) {
