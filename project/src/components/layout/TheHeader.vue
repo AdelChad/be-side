@@ -96,6 +96,12 @@
                             Messages
                         </router-link>
                         </div>
+                        <div class="icon-link">
+                        <router-link to="/plannings" class="nav-link"> 
+                          <font-awesome-icon icon="fa-solid fa-message" />
+                            Plannings
+                        </router-link>
+                        </div>
                     </div>
                 </nav>
 
@@ -107,6 +113,7 @@
                 <div v-if="mobileMenuOpen" class="mobile-menu" ref="mobileMenuRef">
                     <router-link to="/search" class="mobile-link" @click="toggleMobileMenu">Personnaliser</router-link>
                     <router-link to="/conversations" class="mobile-link" @click="toggleMobileMenu">Messages</router-link>
+                    <router-link to="/planings" class="mobile-link" @click="toggleMobileMenu">Plannings</router-link>
                     <router-link to="/profile" class="mobile-link" @click="toggleMobileMenu">Mon profil</router-link>
 
                     <div v-if="!isAuthenticated()" class="mobile-auth">
