@@ -236,6 +236,13 @@
     align-items: stretch;
   }
 
+  .create-group-form {
+    display: grid;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
   .search-input {
     width: 100%;
   }
