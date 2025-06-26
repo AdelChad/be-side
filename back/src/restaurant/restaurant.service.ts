@@ -22,7 +22,10 @@ export class RestaurantService {
     ) { }
 
     async getAllRestaurant(): Promise<Restaurant[]> {
-        return this.restaurantRepository.find()
+        return this.restaurantRepository.find({
+            relations: ['categRestau', 'favorits'],
+            order: { name: 'ASC' },
+        });
     }
 
     async restaurantsByCateg(categsName: Array<string>): Promise<Array<Restaurant>> {

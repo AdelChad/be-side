@@ -28,7 +28,10 @@ export class ActivitiesService {
     ) { }
 
     async getAllActivities(): Promise<Activities[]> {
-        return this.activitiesRepository.find()
+        return this.activitiesRepository.find({
+            relations: ['categActiv', 'favorits'],
+            order: { name: 'ASC' },
+        });
     }
 
     async createActivities(createActivitiesDto: CreateActivityDto): Promise<Activities> {

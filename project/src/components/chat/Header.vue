@@ -1,159 +1,159 @@
 <script setup>
-import { ref, watch } from 'vue'
-import { io } from 'socket.io-client'
-import { jwtDecode } from 'jwt-decode'
-import { selectedGroupId } from '../../stores/chat'
-    import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-    import { library } from '@fortawesome/fontawesome-svg-core'
-    import { faCalendarDays, faPlus } from '@fortawesome/free-solid-svg-icons'
-    library.add(faCalendarDays, faPlus)
+  import { computed, ref, watch } from 'vue'
+  import { io } from 'socket.io-client'
+  import { jwtDecode } from 'jwt-decode'
+  import { selectedGroupId } from '../../stores/chat'
+  import { selectedPlanningId } from '../../stores/planning'
+  import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+  import { library } from '@fortawesome/fontawesome-svg-core'
+  import { faCalendarDays, faPlus } from '@fortawesome/free-solid-svg-icons'
+  import AddActivityModal from '../AddActivityModal.vue'
+  import AddRestaurantModal from '../AddRestaurantModal.vue'
+  library.add(faCalendarDays, faPlus)
 
-const token = localStorage.getItem('access_token')
-const planning = ref([])
-const groupName = ref('')
-const newMember = ref('')
-const errorMessage = ref('')
-const successMessage = ref('')
-const showInput = ref(false)
-let userId = null
+  const token = localStorage.getItem('access_token')
+  const planning = ref([])
+  const groupName = ref('')
+  const newMember = ref('')
+  const errorMessage = ref('')
+  const successMessage = ref('')
+  const showInput = ref(false)
+  const showAddActivityModal = ref(false)
+  const showAddRestaurantModal = ref(false)
+  const showPlanning = ref(false)
+  const selectedTime = ref(null)
+  let userId = null
 
-if (token) {
-  try {
-    const decoded = jwtDecode(token)
-    userId = decoded.sub
-  } catch (e) {
-    console.error('Token invalide ou corrompu', e)
+  if (token) {
+    try {
+      const decoded = jwtDecode(token)
+      userId = decoded.sub
+    } catch (e) {
+      console.error('Token invalide ou corrompu', e)
+    }
   }
-}
 
-const socket = io('http://localhost:3000', {
-  auth: { token }
-})
+  const socket = io('http://localhost:3000', {
+    auth: { token }
+  })
 
+  
+  watch(selectedGroupId, (newGroupId) => {
+    if (newGroupId) {
+      joinChannel(newGroupId)
+      groupName.value = ''
+      errorMessage.value = ''
+      successMessage.value = ''
+    }
+  })
+  
+  function formatDate(dateStr) {
+    const date = new Date(dateStr)
+    return date.toLocaleDateString('fr-FR', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
+  }
+  
+  socket.on('channelMessages', (fetchedMessages) => {
+    if (fetchedMessages.length > 0) {
+      groupName.value = fetchedMessages[0].channel.name
+    }
+  })
+  
   socket.on('channelPlanning', (fetchedPlanning) => {
     planning.value = fetchedPlanning
   })
 
-watch(selectedGroupId, (newGroupId) => {
-  if (newGroupId) {
-    joinChannel(newGroupId)
-    groupName.value = ''
-    errorMessage.value = ''
-    successMessage.value = ''
-  }
-})
-
-function formatDate(dateStr) {
-  const date = new Date(dateStr)
-  return date.toLocaleDateString('fr-FR', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })
-}
-
-
-
-socket.on('channelMessages', (fetchedMessages) => {
-  if (fetchedMessages.length > 0) {
-    groupName.value = fetchedMessages[0].channel.name
-  }
-})
-
- function joinChannel(channelId) {
+  function joinChannel(channelId) {
     socket.emit('joinChannel', { channelId })
     socket.emit('getMessages', { channelId })
     socket.emit('getPlanning', { channelId })
-    socket.emit('getClashes', { channelId })
-    messages.value = []
-    clashes.value = []
   }
 
-// Validation email simple
-function isValidEmail(email) {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  return emailRegex.test(email)
-}
+  function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emailRegex.test(email)
+  }
 
-function toggleInput() {
-  showInput.value = !showInput.value
-  if (showInput.value) {
-    setTimeout(() => {
-      const input = document.querySelector('.search-input')
-      if (input) input.focus()
-    }, 100)
-  } else {
-    newMember.value = ''
+  function toggleInput() {
+    showInput.value = !showInput.value
+    if (showInput.value) {
+      setTimeout(() => {
+        const input = document.querySelector('.search-input')
+        if (input) input.focus()
+      }, 100)
+    } else {
+      newMember.value = ''
+      errorMessage.value = ''
+      successMessage.value = ''
+    }
+  }
+
+  async function addMember() {
     errorMessage.value = ''
     successMessage.value = ''
-  }
-}
 
-async function addMember() {
-  errorMessage.value = ''
-  successMessage.value = ''
-
-  if (newMember.value.trim() === '') {
-    errorMessage.value = 'Veuillez saisir un email'
-    return
-  }
-
-  if (!isValidEmail(newMember.value.trim())) {
-    errorMessage.value = 'Veuillez saisir un email valide'
-    return
-  }
-
-  try {
-    const groupId = Number(selectedGroupId.value)
-
-    if (!groupId) {
-      errorMessage.value = 'Aucun groupe sélectionné'
+    if (newMember.value.trim() === '') {
+      errorMessage.value = 'Veuillez saisir un email'
       return
     }
 
-    const response = await fetch('http://localhost:3000/groupe/add-user', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        groupeId: groupId,
-        users: [{ email: newMember.value.trim() }]
-      })
-    })
-    if (!response.ok) {
-      const errorData = await response.json()
-      throw new Error(errorData.message || `Erreur ${response.status}`)
+    if (!isValidEmail(newMember.value.trim())) {
+      errorMessage.value = 'Veuillez saisir un email valide'
+      return
     }
 
-    successMessage.value = 'Membre ajouté avec succès'
-    newMember.value = ''
-    showInput.value = false
+    try {
+      const groupId = Number(selectedGroupId.value)
 
-    setTimeout(() => {
+      if (!groupId) {
+        errorMessage.value = 'Aucun groupe sélectionné'
+        return
+      }
+
+      const response = await fetch('http://localhost:3000/groupe/add-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          groupeId: groupId,
+          users: [{ email: newMember.value.trim() }]
+        })
+      })
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || `Erreur ${response.status}`)
+      }
+
+      successMessage.value = 'Membre ajouté avec succès'
+      newMember.value = ''
+      showInput.value = false
+
+      setTimeout(() => {
+        successMessage.value = ''
+      }, 3000)
+
+    } catch (error) {
+      console.error("Erreur lors de l'ajout du membre dans ce groupe :", error)
+      errorMessage.value = error.message || "Erreur lors de l'ajout du membre"
+    }
+  }
+
+  function clearMessages() {
+    if (errorMessage.value || successMessage.value) {
+      errorMessage.value = ''
       successMessage.value = ''
-    }, 3000)
-
-  } catch (error) {
-    console.error("Erreur lors de l'ajout du membre dans ce groupe :", error)
-    errorMessage.value = error.message || "Erreur lors de l'ajout du membre"
+    }
   }
-}
 
-function clearMessages() {
-  if (errorMessage.value || successMessage.value) {
-    errorMessage.value = ''
-    successMessage.value = ''
+  function toggleOpenPlanning() {
+    showPlanning.value = !showPlanning.value
   }
-}
-
-const showPlanning = ref(false)
-
-function toggleOpenPlanning() {
-  showPlanning.value = !showPlanning.value
-}
 </script>
 
 <template>
@@ -210,9 +210,14 @@ function toggleOpenPlanning() {
               <div class="step-content">
                 <h4>Petit déjeuner</h4>
                 <div class="image-wrapper">
-                  <router-link to="/" class="planning-placeholder-button">
+                  <div @click="showAddRestaurantModal = true; selectedTime = 'breakfastRestaurant'; selectedPlanningId = day.id" style="cursor: pointer" class="planning-placeholder-button">
                     <font-awesome-icon :icon="['fas', 'plus']" class="fa-plus-icon" />
-                  </router-link>
+                    <AddRestaurantModal
+                      v-if="showAddRestaurantModal && day.id"
+                      :selected-time="selectedTime"
+                      @close="showAddRestaurantModal = false"
+                    />
+                  </div>
                 </div>
               </div>
             </li>
@@ -236,9 +241,14 @@ function toggleOpenPlanning() {
               <div class="step-content">
                 <h4>Activité du matin</h4>
                 <div class="image-wrapper">
-                  <router-link to="/" class="planning-placeholder-button">
+                  <div @click="showAddActivityModal = true; selectedTime = 'morningActivity'; selectedPlanningId = day.id" style="cursor: pointer" class="planning-placeholder-button">
                     <font-awesome-icon :icon="['fas', 'plus']" class="fa-plus-icon" />
-                  </router-link>
+                     <AddActivityModal
+                        v-if="showAddActivityModal && day.id"
+                        :selected-time="selectedTime"
+                        @close="showAddActivityModal = false"
+                      />
+                  </div>
                 </div>
               </div>
             </li>
@@ -261,9 +271,14 @@ function toggleOpenPlanning() {
               <div class="step-content">
                 <h4>Activité du midi</h4>
                 <div class="image-wrapper">
-                  <router-link to="/" class="planning-placeholder-button">
-                  <font-awesome-icon :icon="['fas', 'plus']" class="fa-plus-icon" />
-                  </router-link>
+                  <div @click="showAddActivityModal = true; selectedTime = 'noondayActivity'; selectedPlanningId = day.id" style="cursor: pointer" class="planning-placeholder-button">
+                    <font-awesome-icon :icon="['fas', 'plus']" class="fa-plus-icon" />
+                     <AddActivityModal
+                        v-if="showAddActivityModal && day.id"
+                        :selected-time="selectedTime"
+                        @close="showAddActivityModal = false"
+                      />
+                  </div>
                 </div>
               </div>
             </li>
@@ -286,9 +301,14 @@ function toggleOpenPlanning() {
               <div class="step-content">
                 <h4>Déjeuner</h4>
                 <div class="image-wrapper">
-                  <router-link to="/" class="planning-placeholder-button">
+                  <div @click="showAddRestaurantModal = true; selectedTime = 'lunchRestaurant'; selectedPlanningId = day.id" style="cursor: pointer" class="planning-placeholder-button">
                     <font-awesome-icon :icon="['fas', 'plus']" class="fa-plus-icon" />
-                  </router-link>
+                    <AddRestaurantModal
+                      v-if="showAddRestaurantModal && day.id"
+                      :selected-time="selectedTime"
+                      @close="showAddRestaurantModal = false"
+                    />
+                  </div>
                 </div>
               </div>
             </li>
@@ -311,9 +331,14 @@ function toggleOpenPlanning() {
               <div class="step-content">
                 <h4>Après-midi</h4>
                 <div class="image-wrapper">
-                  <router-link to="/" class="planning-placeholder-button">
+                  <div @click="showAddActivityModal = true; selectedTime = 'afternoonActivity'; selectedPlanningId = day.id" style="cursor: pointer" class="planning-placeholder-button">
                     <font-awesome-icon :icon="['fas', 'plus']" class="fa-plus-icon" />
-                  </router-link>
+                     <AddActivityModal
+                        v-if="showAddActivityModal && day.id"
+                        :selected-time="selectedTime"
+                        @close="showAddActivityModal = false"
+                      />
+                  </div>
                 </div>
               </div>
             </li>
@@ -336,9 +361,14 @@ function toggleOpenPlanning() {
               <div class="step-content">
                 <h4>Soirée</h4>
                 <div class="image-wrapper">
-                  <router-link to="/" class="planning-placeholder-button">
+                  <div @click="showAddActivityModal = true; selectedTime = 'eveningActivity'; selectedPlanningId = day.id" style="cursor: pointer" class="planning-placeholder-button">
                     <font-awesome-icon :icon="['fas', 'plus']" class="fa-plus-icon" />
-                  </router-link>
+                     <AddActivityModal
+                        v-if="showAddActivityModal && day.id"
+                        :selected-time="selectedTime"
+                        @close="showAddActivityModal = false"
+                      />
+                  </div>
                 </div>
               </div>
             </li>
@@ -361,9 +391,14 @@ function toggleOpenPlanning() {
               <div class="step-content">
                 <h4>Dîner</h4>
                 <div class="image-wrapper">
-                  <router-link to="/" class="planning-placeholder-button">
+                  <div @click="showAddRestaurantModal = true; selectedTime = 'dinnerRestaurant'; selectedPlanningId = day.id" style="cursor: pointer" class="planning-placeholder-button">
                     <font-awesome-icon :icon="['fas', 'plus']" class="fa-plus-icon" />
-                  </router-link>
+                    <AddRestaurantModal
+                      v-if="showAddRestaurantModal && day.id"
+                      :selected-time="selectedTime"
+                      @close="showAddRestaurantModal = false"
+                    />
+                  </div>
                 </div>
               </div>
             </li>
@@ -387,9 +422,14 @@ function toggleOpenPlanning() {
               <div class="step-content">
                 <h4>Nuit</h4>
                 <div class="image-wrapper">
-                  <router-link to="/" class="planning-placeholder-button">
-                   <font-awesome-icon :icon="['fas', 'plus']" class="fa-plus-icon" />
-                  </router-link>
+                  <div @click="showAddActivityModal = true; selectedTime = 'nightActivity'; selectedPlanningId = day.id" style="cursor: pointer" class="planning-placeholder-button">
+                    <font-awesome-icon :icon="['fas', 'plus']" class="fa-plus-icon" />
+                     <AddActivityModal
+                        v-if="showAddActivityModal && day.id"
+                        :selected-time="selectedTime"
+                        @close="showAddActivityModal = false"
+                      />
+                  </div>
                 </div>
               </div>
             </li>

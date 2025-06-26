@@ -23,10 +23,6 @@ export class PlanningUpdateDto {
     @IsNotEmpty()
     id: number;
 
-    @Type(() => Date)
-    @IsDate()
-    date: Date;
-
     @IsArray()
     @ValidateNested({ each: true })
     @Type(() => ActivitiMinimal)
