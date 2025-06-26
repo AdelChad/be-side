@@ -65,9 +65,6 @@ socket.on('channelMessages', (fetchedMessages) => {
     socket.emit('joinChannel', { channelId })
     socket.emit('getMessages', { channelId })
     socket.emit('getPlanning', { channelId })
-    socket.emit('getClashes', { channelId })
-    messages.value = []
-    clashes.value = []
   }
 
 // Validation email simple

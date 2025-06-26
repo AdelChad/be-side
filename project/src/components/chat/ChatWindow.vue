@@ -6,23 +6,27 @@ import { selectedGroupId } from '../../stores/chat'
 import Header from './Header.vue'
 
 const token = localStorage.getItem('access_token')
-let userId = null
+const userId = ref(null)
 
-if (token) {
-  try {
-    const decoded = jwtDecode(token)
-    userId = decoded.sub
-  } catch (e) {
-    console.error('Token invalide', e)
+onMounted(() => {
+  const token = localStorage.getItem('access_token')
+  if (token) {
+    try {
+      const decoded = jwtDecode(token)
+      console.log('decoded token:', decoded)
+      userId.value = decoded.id
+    } catch (e) {
+      console.error('Token invalide', e)
+    }
   }
-}
+})
 
 const socket = io('http://localhost:3000', { auth: { token } })
 
 const newMessage = ref('')
 const messages = ref([])
-const planning = ref([])
 const clashes = ref([])
+const planning = ref([])
 const activities = ref([])
 const restaurants = ref([])
 
@@ -33,6 +37,23 @@ const selectedOptionB = ref(null)
 const searchQuery = ref('')
 
 const votingClash = ref(null)
+
+const conversationFlow = computed(() => {
+  const allItems = [
+    ...messages.value.map(msg => ({
+      ...msg,
+      type: 'message'
+    })),
+    ...clashes.value.map(clash => ({
+      ...clash,
+      type: 'clash'
+    }))
+  ];
+
+  return allItems.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+});
+
+
 
 const filteredOptions = computed(() => {
   const options = clashType.value === 'activity' ? activities.value : restaurants.value
@@ -62,18 +83,21 @@ onMounted(() => {
     messages.value = fetchedMessages.map(msg => ({
       author: msg.author.firstName,
       content: msg.content,
-      sent: msg.author.id === userId,
-      timestamp: new Date(msg.createdAt).toLocaleTimeString()
+      sent: String(msg.author.id) === String(userId.value),
+      timestamp: new Date(msg.createdAt).toLocaleTimeString(),
+      createdAt: msg.createdAt
     }))
   })
 
-  socket.on('newMessage', (message) => {
-    messages.value.push({
-      content: message.content,
-      sent: message.author.id === userId,
-      timestamp: new Date(message.createdAt).toLocaleTimeString()
-    })
+socket.on('newMessage', (message) => {
+  messages.value.push({
+    author: message.author.firstName,
+    content: message.content,
+    sent: String(message.author.id) === String(userId.value),
+    timestamp: new Date(message.createdAt).toLocaleTimeString(),
+    createdAt: message.createdAt
   })
+})
 
   socket.on('channelClashes', (fetchedClashes) => {
     clashes.value = fetchedClashes.map(formatClash)
@@ -101,6 +125,11 @@ onBeforeUnmount(() => {
 })
 
 function formatClash(clash) {
+  const creatorId = clash.creator?.id
+  const isSent = String(creatorId) === String(userId.value)
+
+  const clashType = clash.activityOptionA ? 'activity' : 'restaurant'
+
   return {
     id: clash.id,
     creator: clash.creator?.firstName || 'Inconnu',
@@ -114,7 +143,10 @@ function formatClash(clash) {
     userVote: clash.userVote || null,
     isFinished: clash.isFinished || false,
     timestamp: new Date(clash.createdAt).toLocaleTimeString(),
-    type: clash.activityOptionA ? 'activity' : 'restaurant'
+    createdAt: clash.createdAt,
+    sent: isSent,
+    clashType,
+    type: 'clash'
   }
 }
 
@@ -163,12 +195,6 @@ function vote(clashId, option) {
 function sendMessage() {
   if (!newMessage.value.trim() || !selectedGroupId.value) return
 
-  messages.value.push({
-    content: newMessage.value,
-    sent: true,
-    timestamp: new Date().toLocaleTimeString()
-  })
-
   socket.emit('sendMessage', {
     channelId: selectedGroupId.value,
     content: newMessage.value
@@ -194,59 +220,59 @@ function formatDate(date) {
 <template>
   <div class="chat-window">
     <Header />
-
     <div class="chat-content">
-      <div class="chat-messages">
-        <div v-for="(message, index) in messages" :key="index" :class="['message', message.sent ? 'sent' : 'received']">
-          <div class="author" v-if="!message.sent">{{ message.author }}</div>
-          <span>{{ message.content }}</span>
-          <div class="timestamp">{{ message.timestamp }}</div>
-        </div>
-      </div>
-
-      <div v-if="activeClashes.length" class="clashes-section">
-        <div v-for="clash in activeClashes" :key="clash.id" class="clash-card">
-          <div class="clash-header">
-            <span class="clash-creator">Créé par {{ clash.creator }}</span>
-            <span class="clash-type">{{ clash.type === 'activity' ? '🎯 Activité' : '🍽️ Restaurant' }}</span>
+      <div class="conversation-flow">
+        <div v-for="(item, index) in conversationFlow" :key="`${item.type}-${item.id || index}`">
+          <!-- Messages -->
+          <div v-if="item.type === 'message'" :class="['message', item.sent ? 'sent' : 'received']">
+            <div class="author" v-if="!item.sent">{{ item.author }}</div>
+            <span>{{ item.content }}</span>
+            <div class="timestamp">{{ item.timestamp }}</div>
           </div>
 
-          <div class="clash-options">
-            <div class="option-container">
-              <div class="option"
-                :class="{ 'voted': clash.userVote === 'A', 'winning': clash.votesA > clash.votesB && clash.totalVotes > 0 }"
-                :aria-disabled="clash.userVote ? 'true' : 'false'" :tabindex="clash.userVote ? -1 : 0"
-                @click="vote(clash.id, 'A')">
-                <h4>{{ clash.type === 'activity' ? clash.activityOptionA?.name : clash.restaurantOptionA?.name }}</h4>
-                <div class="vote-info">
-                  <span class="vote-count">{{ clash.votesA }} votes</span>
-                  <div class="progress-bar">
-                    <div class="progress-fill" :style="{ width: getProgressPercentage(clash, 'A') + '%' }"></div>
+          <div v-else-if="item.type === 'clash'" :class="['clash-message', item.sent ? 'sent' : 'received']">
+            <div class="clash-card compact">
+              <div class="clash-header">
+                <span class="clash-creator">{{ item.sent ? 'Vous avez créé' : `${item.creator} a créé` }}</span>
+                <span class="clash-type">{{ item.clashType === 'activity' ? 'Activité 🎯' : 'Restaurant 🍽️' }}</span>
+              </div>
+              <div class="clash-options">
+                <div class="option-container">
+                  <div class="option compact"
+                    :class="{ 'voted': item.userVote === 'A', 'winning': item.votesA > item.votesB && item.totalVotes > 0 }"
+                    @click="vote(item.id, 'A')">
+                    <h5>{{ item.clashType === 'activity' ? item.activityOptionA?.name : item.restaurantOptionA?.name }}</h5>
+                    <div class="vote-info">
+                      <span class="vote-count">{{ item.votesA > 1 ? item.votesA + ' votes' : item.votesA + ' vote' }}</span>
+                      <div class="progress-bar">
+                        <div class="progress-fill" :style="{ width: getProgressPercentage(item, 'A') + '%' }"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="vs-divider compact">VS</div>
+
+                <div class="option-container">
+                  <div class="option compact"
+                    :class="{ 'voted': item.userVote === 'B', 'winning': item.votesB > item.votesA && item.totalVotes > 0 }"
+                    @click="vote(item.id, 'B')">
+                    <h5>{{ item.clashType === 'activity' ? item.activityOptionB?.name : item.restaurantOptionB?.name }}</h5>
+                    <div class="vote-info">
+                      <span class="vote-count">{{ item.votesB > 1 ? item.votesB + ' votes' : item.votesB + ' vote' }}</span>
+                      <div class="progress-bar">
+                        <div class="progress-fill" :style="{ width: getProgressPercentage(item, 'B') + '%' }"></div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div class="vs-divider">VS</div>
-
-            <div class="option-container">
-              <div class="option"
-                :class="{ 'voted': clash.userVote === 'B', 'winning': clash.votesB > clash.votesA && clash.totalVotes > 0 }"
-                @click="vote(clash.id, 'B')">
-                <h4>{{ clash.type === 'activity' ? clash.activityOptionB?.name : clash.restaurantOptionB?.name }}</h4>
-                <div class="vote-info">
-                  <span class="vote-count">{{ clash.votesB }} votes</span>
-                  <div class="progress-bar">
-                    <div class="progress-fill" :style="{ width: getProgressPercentage(clash, 'B') + '%' }"></div>
-                  </div>
-                </div>
+              <div class="clash-footer">
+                <span class="total-votes">{{ item.totalVotes > 1 ? item.totalVotes + ' votes' : item.totalVotes + ' vote' }} au total</span>
+                <span class="clash-time">{{ item.timestamp }}</span>
               </div>
             </div>
-          </div>
-
-          <div class="clash-footer">
-            <span class="total-votes">{{ clash.totalVotes }} votes au total</span>
-            <span class="clash-time">{{ clash.timestamp }}</span>
           </div>
         </div>
       </div>
@@ -266,7 +292,6 @@ function formatDate(date) {
         </div>
 
         <div class="modal-body">
-          <!-- Sélection du type -->
           <div class="type-selector">
             <button @click="clashType = 'activity'" :class="['type-btn', { active: clashType === 'activity' }]">
               🎯 Activités
@@ -327,6 +352,7 @@ function formatDate(date) {
   background-image: url('../../assets/background beside jaune.png');
   background-size: cover;
   background-position: center;
+  height: 100%;
 }
 
 .chat-content {
@@ -334,9 +360,11 @@ function formatDate(date) {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  height: 100%;
 }
 
-.chat-messages {
+/* Flux unifié de conversation */
+.conversation-flow {
   flex: 1;
   overflow-y: auto;
   padding: 24px;
@@ -345,8 +373,14 @@ function formatDate(date) {
   gap: 16px;
 }
 
+.conversation-flow > div {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Messages standards */
 .message {
-  max-width: 60%;
+  max-width: fit-content;
   padding: 12px;
   border-radius: 16px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -363,74 +397,49 @@ function formatDate(date) {
   align-self: flex-end;
 }
 
-.author {
+.message .author {
   font-size: 12px;
   font-weight: bold;
   margin-bottom: 2px;
   color: #3a3a3a;
 }
 
-.timestamp {
+.message .timestamp {
   font-size: 12px;
   text-align: right;
   margin-top: 4px;
   color: gray;
 }
 
-.planning-section {
-  padding: 16px 24px;
-  background: rgba(255, 255, 255, 0.9);
-  margin: 0 24px 16px 24px;
-  border-radius: 12px;
+/* Messages de clash */
+.clash-message {
+  display: flex;
+  max-width: 75%;
+  width: 100%;
+   align-items: flex-start;
 }
 
-.day-card {
+.clash-message.sent {
+  align-self: flex-end;
+  justify-content: flex-end;
+}
+
+.clash-message.received {
+  align-self: flex-start;
+  justify-content: flex-start;
+}
+
+.clash-card.compact {
+  width: 100%;
   background: white;
+  border-radius: 12px;
   padding: 16px;
-  border-radius: 8px;
-  margin-bottom: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.day-card h3 {
-  margin: 0 0 12px 0;
-  color: #e99415;
-}
-
-.day-card ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.day-card li {
-  padding: 4px 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.clashes-section {
-  padding: 20px;
-  border-radius: 12px;
-}
-
-.clashes-section h2 {
-  color: white;
-  margin-bottom: 20px;
-  text-align: center;
-  font-size: 1.5em;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.clash-card {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 15px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  animation: slideInUp 0.5s ease-out;
 }
 
-.clash-card:hover {
+.clash-card.compact:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
@@ -439,20 +448,20 @@ function formatDate(date) {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .clash-creator {
-  font-size: 14px;
+  font-size: 13px;
   color: #666;
 }
 
 .clash-type {
   background: linear-gradient(45deg, #FFD700, #FFA500);
   color: white;
-  padding: 4px 12px;
+  padding: 3px 10px;
   border-radius: 20px;
-  font-size: 0.8em;
+  font-size: 0.75em;
   font-weight: 500;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
@@ -460,64 +469,71 @@ function formatDate(date) {
 .clash-options {
   display: flex;
   align-items: center;
-  gap: 15px;
-  margin-bottom: 15px;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
 .option-container {
   flex: 1;
 }
 
-.option {
-  background: linear-gradient(272deg, #f8f9ff 0%, #e8eeff 100%);
-  border: 2px solid #e0e6ff;
-  border-radius: 10px;
-  padding: 15px;
+.option.compact {
+  background: linear-gradient(272deg, #f0f4f8 0%, #d9e2ec 100%);
+  border: 2px solid #bcccdc;
+  border-radius: 12px;
+  padding: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  color: #102a43;
 }
 
-.option:hover {
+.option.compact:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
   border-color: #667eea;
 }
 
-.option.voted {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-color: #5a67d8;
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+.option.compact.voted {
+  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+  color: #ffffff;
+  border-color: #1d4ed8;
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35);
+  cursor: default;
 }
 
-.option.winning:not(.voted) {
+.option.compact.winning:not(.voted) {
   background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
   color: white;
   border-color: #38a169;
   animation: pulse-win 2s infinite;
 }
 
-@keyframes pulse-win {
-
-  0%,
-  100% {
-    transform: scale(1);
-  }
-
-  50% {
-    transform: scale(1.02);
-  }
+.option.compact.voted::after {
+  content: '✓';
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 12px;
 }
 
-.option h4 {
-  margin: 0 0 10px 0;
-  font-size: 1.1em;
+.option.compact h5 {
+  margin: 0 0 8px 0;
+  font-size: 0.95em;
   font-weight: 600;
 }
 
-.option.voted h4 {
+.option.compact.voted h5 {
   color: white;
 }
 
@@ -525,184 +541,122 @@ function formatDate(date) {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .vote-count {
-  font-size: 0.9em;
+  font-size: 0.8em;
   font-weight: 500;
-  min-width: 70px;
+  min-width: 50px;
 }
 
-.option.voted .vote-count {
+.option.compact.voted .vote-count {
   color: rgba(255, 255, 255, 0.9);
 }
 
 .progress-bar {
   flex: 1;
-  height: 8px;
+  height: 6px;
   background: rgba(0, 0, 0, 0.1);
-  border-radius: 4px;
+  border-radius: 3px;
   overflow: hidden;
-  margin-left: 10px;
+  margin-left: 8px;
 }
 
-.option.voted .progress-bar {
+.option.compact.voted .progress-bar {
   background: rgba(255, 255, 255, 0.2);
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #667eea, #764ba2);
-  border-radius: 4px;
+  background: linear-gradient(90deg, #FFD700, #FFA500);
+  border-radius: 3px;
   transition: width 0.5s ease;
   position: relative;
 }
 
-.option.voted .progress-fill {
+.option.compact.voted .progress-fill {
   background: linear-gradient(90deg, #fff, #f0f0f0);
 }
 
-.option.winning .progress-fill {
+.option.compact.winning .progress-fill {
   background: linear-gradient(90deg, #48bb78, #38a169);
   animation: progress-glow 2s infinite;
 }
 
-@keyframes progress-glow {
-
-  0%,
-  100% {
-    box-shadow: 0 0 5px rgba(72, 187, 120, 0.5);
-  }
-
-  50% {
-    box-shadow: 0 0 15px rgba(72, 187, 120, 0.8);
-  }
-}
-
-.vs-divider {
+.vs-divider.compact {
   background: linear-gradient(45deg, #FFD700, #FFA500);
   color: white;
-  padding: 10px 15px;
+  padding: 8px 12px;
   border-radius: 50%;
   font-weight: bold;
-  font-size: 0.9em;
+  font-size: 0.75em;
   box-shadow: 0 4px 10px rgba(238, 90, 36, 0.3);
-  min-width: 40px;
+  min-width: 35px;
   text-align: center;
   animation: rotate 3s infinite linear;
-}
-
-@keyframes rotate {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 .clash-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.85em;
+  font-size: 0.8em;
   color: #666;
-  padding-top: 10px;
+  padding-top: 8px;
   border-top: 1px solid #f0f0f0;
+  margin-top: 8px;
 }
 
 .total-votes {
   font-weight: 600;
   color: #FFD700;
-
 }
 
 .clash-time {
   opacity: 0.7;
 }
 
-.option.voted {
-  cursor: default;
-}
-
-.option:not(.voted):not(.winning):active {
-  transform: scale(0.98);
-}
-
-@media (max-width: 768px) {
-  .clash-options {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .vs-divider {
-    transform: rotate(90deg);
-    margin: 5px 0;
-  }
-
-  .clash-header {
-    flex-direction: column;
-    gap: 10px;
-    text-align: center;
-  }
-
-  .clash-footer {
-    flex-direction: column;
-    gap: 5px;
-    text-align: center;
-  }
-}
-
-.clash-card {
-  animation: slideInUp 0.5s ease-out;
-}
-
+/* Animations */
 @keyframes slideInUp {
   from {
     opacity: 0;
     transform: translateY(30px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-.option.voted::after {
-  content: '✓';
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  width: 25px;
-  height: 25px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 14px;
+@keyframes pulse-win {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
 }
 
-.no-clashes {
-  text-align: center;
-  padding: 40px 20px;
-  color: rgba(255, 255, 255, 0.8);
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-.no-clashes h3 {
-  margin-bottom: 10px;
-  font-size: 1.2em;
+@keyframes progress-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(72, 187, 120, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(72, 187, 120, 0.8);
+  }
 }
 
-.no-clashes p {
-  opacity: 0.8;
-}
-
+/* Input de chat */
 .chat-input {
   display: flex;
   align-items: center;
@@ -758,6 +712,7 @@ function formatDate(date) {
   transform: translateY(-2px);
 }
 
+/* Modal styles */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -851,98 +806,34 @@ function formatDate(date) {
 
 .selection-area {
   display: flex;
-  align-items: center;
-  gap: 20px;
-  margin-bottom: 20px;
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 8px;
+  align-items: flex-end;
+  gap: 15px;
 }
 
 .selection-column {
   flex: 1;
-  text-align: center;
 }
 
 .selection-column h3 {
-  margin: 0 0 12px 0;
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 600;
   color: #333;
 }
 
-.selected-option {
-  background: #e99415;
-  color: white;
-  padding: 12px;
-  border-radius: 8px;
-  font-weight: bold;
-}
-
-.placeholder-option {
-  background: #dee2e6;
-  color: #6c757d;
-  padding: 12px;
-  border-radius: 8px;
-  border: 2px dashed #adb5bd;
+.selection-column select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
 }
 
 .vs-column {
   font-size: 20px;
   font-weight: bold;
   color: #e99415;
-}
-
-.options-list {
-  max-height: 300px;
-  overflow-y: auto;
-  border: 1px solid #dee2e6;
-  border-radius: 8px;
-}
-
-.option-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid #eee;
-  transition: background 0.2s ease;
-}
-
-.option-item:hover {
-  background: #f8f9fa;
-}
-
-.option-item.selected-a {
-  background: #fff3cd;
-  border-left: 4px solid #e99415;
-}
-
-.option-item.selected-b {
-  background: #d4edda;
-  border-left: 4px solid #28a745;
-}
-
-.option-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.select-btn {
-  padding: 6px 12px;
-  border: 1px solid #dee2e6;
-  background: white;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.select-btn:hover:not(:disabled) {
-  background: #e99415;
-  color: white;
-}
-
-.select-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  margin-bottom: 10px;
 }
 
 .modal-footer {
@@ -951,5 +842,35 @@ function formatDate(date) {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+}
+
+.modal-footer button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .clash-options {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .vs-divider.compact {
+    transform: rotate(90deg);
+    margin: 4px 0;
+  }
+
+  .clash-header {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+
+  .clash-footer {
+    flex-direction: column;
+    gap: 4px;
+    text-align: center;
+  }
 }
 </style>
