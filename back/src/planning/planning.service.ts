@@ -141,22 +141,30 @@ export class PlanningService {
     async modifyActivityDay(activitiesDayUpdateDto: PlanningUpdateDto, user: User): Promise<Planning> {
         try {
             const { id, activities, restaurants, groupeId } = activitiesDayUpdateDto;
-        
+
             const planning = await this.planningRepository.findOne({
-                where: { id },
-                relations: {
+            where: { id },
+            relations: {
                 user: true,
+                group: { members: true },
                 activitiesDay: {
-                    morningActivity: true,
-                    noondayActivity: true,
-                    afternoonActivity: true,
-                    eveningActivity: true,
-                    nightActivity: true,
+                morningActivity: true,
+                noondayActivity: true,
+                afternoonActivity: true,
+                eveningActivity: true,
+                nightActivity: true,
                 },
-                },
+            },
             });
-        
-            if (!planning || planning.user.id !== user.id) {
+
+            if (!planning) {
+                throw new HttpException('Planning introuvable', HttpStatus.NOT_FOUND);
+            }
+
+            const isOwner = planning.user.id === user.id;
+            const isGroupMember = planning.group?.members?.some(member => member.id === user.id);
+
+            if (!isOwner && !isGroupMember) {
                 throw new HttpException('Accès non autorisé à ce planning', HttpStatus.UNAUTHORIZED);
             }
 
@@ -166,13 +174,18 @@ export class PlanningService {
             }
 
             if (groupeId) {
-                const groupe = await this.groupeRepository.findOne({ where: { id: groupeId } });
-                if (!groupe) {
-                    throw new HttpException(`Groupe with ID ${groupeId} not found`, HttpStatus.NOT_FOUND);
-                }
-                planning.group = groupe;
+            const groupe = await this.groupeRepository.findOne({
+                where: { id: groupeId },
+                relations: ['members'],
+            });
+
+            if (!groupe) {
+                throw new HttpException(`Groupe avec l'ID ${groupeId} introuvable`, HttpStatus.NOT_FOUND);
             }
-        
+
+            planning.group = groupe;
+            }
+
             const fullActivities = await Promise.all(
                 activities.map(({ id }) => this.activitiesRepository.findOne({ where: { id } }))
             );
@@ -183,61 +196,59 @@ export class PlanningService {
             const times = ['morningActivity', 'noondayActivity', 'afternoonActivity', 'eveningActivity', 'nightActivity'];
 
             times.forEach(timeSlot => {
-                const hasNewActivity = activities.some(a => a.time === timeSlot);
-
-                if (hasNewActivity) {
-                    activityDay[timeSlot] = null;
-                }
+            const hasNewActivity = activities.some(a => a.time === timeSlot);
+            if (hasNewActivity) {
+                activityDay[timeSlot] = null;
+            }
             });
 
             activities.forEach(({ time }, index) => {
-                const activity = fullActivities[index];
-                if (!activity) return;
+            const activity = fullActivities[index];
+            if (!activity) return;
 
-                switch (time) {
-                    case 'morningActivity':
-                        activityDay.morningActivity = activity;
-                        break;
-                    case 'noondayActivity':
-                        activityDay.noondayActivity = activity;
-                        break;
-                    case 'afternoonActivity':
-                        activityDay.afternoonActivity = activity;
-                        break;
-                    case 'eveningActivity':
-                        activityDay.eveningActivity = activity;
-                        break;
-                    case 'nightActivity':
-                        activityDay.nightActivity = activity;
-                        break;
-                }
+            switch (time) {
+                case 'morningActivity':
+                activityDay.morningActivity = activity;
+                break;
+                case 'noondayActivity':
+                activityDay.noondayActivity = activity;
+                break;
+                case 'afternoonActivity':
+                activityDay.afternoonActivity = activity;
+                break;
+                case 'eveningActivity':
+                activityDay.eveningActivity = activity;
+                break;
+                case 'nightActivity':
+                activityDay.nightActivity = activity;
+                break;
+            }
             });
 
             restaurants.forEach(({ time }, index) => {
-                const restaurant = fullRestaurants[index];
-                if (!restaurant) return;
-        
-                switch (time) {
-                    case 'breakfastRestaurant':
-                        activityDay.breakfastRestaurant = restaurant;
-                        break;
-                    case 'lunchRestaurant':
-                        activityDay.lunchRestaurant = restaurant;
-                        break;
-                    case 'dinnerRestaurant':
-                        activityDay.dinnerRestaurant = restaurant;
-                        break;
-                }
+            const restaurant = fullRestaurants[index];
+            if (!restaurant) return;
+
+            switch (time) {
+                case 'breakfastRestaurant':
+                activityDay.breakfastRestaurant = restaurant;
+                break;
+                case 'lunchRestaurant':
+                activityDay.lunchRestaurant = restaurant;
+                break;
+                case 'dinnerRestaurant':
+                activityDay.dinnerRestaurant = restaurant;
+                break;
+            }
             });
-        
+
             await activityDay.save();
-        
             planning.activitiesDay = [activityDay];
             await planning.save();
-        
+
             return planning;
         } catch (error) {
-            console.log(error);
+            console.error(error);
             throw new HttpException('Erreur lors de la modification du planning', HttpStatus.BAD_REQUEST);
         }
     }
