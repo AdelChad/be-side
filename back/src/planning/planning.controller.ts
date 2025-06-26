@@ -7,6 +7,7 @@ import { UserRequest } from 'src/interface/user-request.interface';
 import { UserService } from 'src/user/user.service';
 import { PlanningCreateDto } from './dto/create-planning.dto';
 import { PlanningUpdateDto } from './dto/modify-planning.dto';
+import { PlanningShareDto } from './dto/share-planning.dto';
 
 @Controller('plannings')
 export class PlanningController {
@@ -54,5 +55,15 @@ export class PlanningController {
         const user = await this.userService.findOne(userRequest.email)
 
         return await this.planningService.getPlanningById(+id, user);
+    }
+
+    @UseGuards(AuthGuard)
+    @Roles(['user'])
+    @Post('share')
+    async sharePlanning(@Body() activitiesShareDto: PlanningShareDto, @Req() request): Promise<Planning> {
+        const userRequest: UserRequest = request.user
+        const user = await this.userService.findOne(userRequest.email)
+
+        return await this.planningService.sharePlanning(activitiesShareDto, user);
     }
 }

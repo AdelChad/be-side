@@ -4,7 +4,8 @@
   import { selectedPlanningId } from '../../stores/planning'
 
   const plannings = ref([])
-  const newGroupe = ref('')
+  const newPlanningName = ref('')
+  const planningDate = ref('')
   const searchQuery = ref('')
   const errorMessage = ref('')
   const token = localStorage.getItem('access_token')
@@ -17,51 +18,6 @@
       userId = decoded.sub
     } catch (e) {
       console.error('Token invalide ou corrompu', e)
-    }
-  }
-
-  async function createGroupe() {
-    errorMessage.value = ''
-    
-    if (newGroupe.value.trim() === '') {
-      errorMessage.value = 'Veuillez saisir un nom de groupe'
-      return
-    }
-
-    try {
-      const response = await fetch('http://localhost:3000/groupe/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          groupeName: newGroupe.value,
-          users: []
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error(`Erreur ${response.status}`)
-      }
-
-      const created = await response.json()
-
-      plannings.value.push({
-        id: created.id,
-        name: created.groupeName
-      })
-
-      newGroupe.value = ''
-    } catch (error) {
-      console.error('Erreur lors de la création du groupe :', error)
-      errorMessage.value = 'Erreur lors de la création du groupe'
-    }
-  }
-
-  function clearError() {
-    if (errorMessage.value) {
-      errorMessage.value = ''
     }
   }
 
@@ -81,7 +37,6 @@
       }
 
       const data = await response.json()
-      
       plannings.value = data.map(planning => ({
         id: planning.id,
         name: planning.name,
@@ -92,6 +47,58 @@
     }
   })
 
+  async function createPlanning() {
+    errorMessage.value = ''
+
+    if (newPlanningName.value.trim() === '' || planningDate.value === '') {
+      errorMessage.value = 'Veuillez saisir un nom et une date'
+      return
+    }
+
+    try {
+      const response = await fetch('http://localhost:3000/plannings/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: newPlanningName.value.trim(),
+          date: new Date(planningDate.value),
+          activities: [],
+          restaurants: [],
+          groupeId: null
+        })
+      })
+      console.log(response);
+      
+
+      if (!response.ok) {
+        throw new Error(`Erreur ${response.status}`)
+      }
+
+      const created = await response.json()
+
+      plannings.value.push({
+        id: created.id,
+        name: created.name,
+        activitiesDay: created.activitiesDay,
+      })
+
+      newPlanningName.value = ''
+      planningDate.value = ''
+    } catch (error) {
+      console.error('Erreur lors de la création du planning :', error)
+      errorMessage.value = 'Erreur lors de la création du planning'
+    }
+  }
+
+  function clearError() {
+    if (errorMessage.value) {
+      errorMessage.value = ''
+    }
+  }
+
   const filteredPlannings = computed(() =>
     plannings.value.filter(planning =>
       planning.name.toLowerCase().includes(searchQuery.value.toLowerCase())
@@ -99,20 +106,28 @@
   )
 </script>
 
+
 <template>
   <div class="sidebar">
     <div class="sidebar-header">
       <div class="create-group-form">
         <input
           type="text"
-          v-model="newGroupe"
-          @keyup.enter="createGroupe"
+          v-model="newPlanningName"
+          @keyup.enter="createPlanning"
           @input="clearError"
           placeholder="Nom du nouveau planning"
           class="search-input"
           :class="{ 'error': errorMessage }"
         />
-        <button @click="createGroupe" class="create-btn">
+        <input
+          type="date"
+          v-model="planningDate"
+          @change="clearError"
+          class="search-input"
+          :class="{ 'error': errorMessage }"
+        />
+        <button @click="createPlanning" class="create-btn">
           Créer
         </button>
       </div>
@@ -131,6 +146,7 @@
     </div>
   </div>
 </template>
+
 
 <style scoped>
 .sidebar {
