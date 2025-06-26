@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { ForbiddenException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Planning } from './planning.entity';
 import { Repository } from 'typeorm';
@@ -9,6 +9,7 @@ import { Activities } from 'src/activities/activities.entity';
 import { PlanningUpdateDto } from './dto/modify-planning.dto';
 import { Groupe } from 'src/groupe/groupe.entity';
 import { Restaurant } from 'src/restaurant/restaurant.entity';
+import { PlanningShareDto } from './dto/share-planning.dto';
 
 @Injectable()
 export class PlanningService {
@@ -283,5 +284,37 @@ export class PlanningService {
             console.error(error);
             throw new HttpException('Error retrieving planning', HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    async sharePlanning(dto: PlanningShareDto, user: User): Promise<Planning> {
+        const { planningId, groupId } = dto;
+
+        const planning = await this.planningRepository.findOne({
+            where: { id: planningId },
+            relations: ['user', 'group'],
+        });
+
+        if (!planning) {
+            throw new NotFoundException('Planning not found');
+        }
+
+        if (planning.user.id !== user.id) {
+            throw new ForbiddenException('You are not allowed to share this planning');
+        }
+
+        const group = await this.groupeRepository.findOne({
+            where: { id: groupId },
+            relations: ['members'],
+        });
+
+        if (!group) {
+            throw new NotFoundException('Group not found');
+        }
+
+        planning.group = group;
+
+        await planning.save();
+
+        return planning;
     }
 }

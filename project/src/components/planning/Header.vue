@@ -1,27 +1,57 @@
 <script setup>
-import { ref, watch } from 'vue'
-import { io } from 'socket.io-client'
-import { jwtDecode } from 'jwt-decode'
-import { selectedPlanningId } from '../../stores/planning'
+  import { computed, onMounted, ref, watch } from 'vue'
+  import { io } from 'socket.io-client'
+  import { jwtDecode } from 'jwt-decode'
+  import { selectedPlanningId } from '../../stores/planning'
+  import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
-const token = localStorage.getItem('access_token')
-const planning = ref(null)
-const groupeName = ref('')
-const errorMessage = ref('')
-const successMessage = ref('')
-const showInput = ref(false)
-let userId = null
+  const token = localStorage.getItem('access_token')
+  const planning = ref(null)
+  const groups = ref([])
+  const groupeName = ref(null)
+  const searchQuery = ref('')
+  const errorMessage = ref('')
+  const successMessage = ref('')
+  const showInput = ref(false)
+  let userId = null
 
-if (token) {
-  try {
-    const decoded = jwtDecode(token)
-    userId = decoded.sub
-  } catch (e) {
-    console.error('Token invalide ou corrompu', e)
+  if (token) {
+    try {
+      const decoded = jwtDecode(token)
+      userId = decoded.sub
+    } catch (e) {
+      console.error('Token invalide ou corrompu', e)
+    }
   }
-}
 
-async function getPlanning(newPlanningId) {
+  onMounted(async () => {
+    if (!token) return
+
+    try {
+      const response = await fetch(`http://localhost:3000/groupe`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`Erreur ${response.status}`)
+      }
+
+      const data = await response.json()
+      groups.value = data.map(groupe => ({
+        id: groupe.id,
+        name: groupe.groupeName,
+      }))
+      console.log(groups);
+      
+    } catch (error) {
+      console.error('Erreur lors de la récupération des groupes :', error)
+    }
+  })
+
+  async function getPlanning(newPlanningId) {
     try {
       const response = await fetch(`http://localhost:3000/plannings/${newPlanningId}`, {
         method: 'GET',
@@ -51,38 +81,41 @@ async function getPlanning(newPlanningId) {
     errorMessage.value = ''
     successMessage.value = ''
 
-    if (groupeName.value.trim() === '') {
-      errorMessage.value = "Veuillez saisir le nom d'un groue"
+    const planningId = Number(selectedPlanningId.value)
+    const groupId = groupeName.value
+
+    if (!planningId) {
+      errorMessage.value = 'Aucun planning sélectionné'
+      return
+    }
+
+    if (!groupId) {
+      errorMessage.value = 'Aucun groupe sélectionné'
       return
     }
 
     try {
-      const planningId = Number(selectedPlanningId.value)
-
-      if (!planningId) {
-        errorMessage.value = 'Aucun planning sélectionné'
-        return
-      }
-
-      const response = await fetch('http://localhost:3000/planning/share', {
+      const response = await fetch('http://localhost:3000/plannings/share', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
-          planningId: planningId,
-          groupe: groupeName.value
+          planningId,
+          groupId
         })
       })
+
       if (!response.ok) {
         const errorData = await response.json()
         throw new Error(errorData.message || `Erreur ${response.status}`)
       }
 
-      successMessage.value = 'Planning partager avec succès'
-      groupeName.value = ''
+      successMessage.value = 'Planning partagé avec succès'
       showInput.value = false
+      groupeName.value = null
+      toggleOpenGroups()
 
       setTimeout(() => {
         successMessage.value = ''
@@ -103,32 +136,22 @@ async function getPlanning(newPlanningId) {
     })
   }
 
-  function clearMessages() {
-    if (errorMessage.value || successMessage.value) {
-      errorMessage.value = ''
-      successMessage.value = ''
-    }
+  const showGroups = ref(false)
+
+  function toggleOpenGroups() {
+    showGroups.value = !showGroups.value
   }
 
-  function toggleInput() {
-    showInput.value = !showInput.value
-    if (showInput.value) {
-      setTimeout(() => {
-        const input = document.querySelector('.search-input')
-        if (input) input.focus()
-      }, 100)
-    } else {
-      groupeName.value = ''
-      errorMessage.value = ''
-      successMessage.value = ''
-    }
-  }
+  const filteredGroups = computed(() =>
+    groups.value.filter(group =>
+      group.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+    )
+  )
+  
 </script>
 
 <template>
   <div class="header">
-    <img src="https://media.gqmagazine.fr/photos/5ef0aedfcaa5a09c5304aed1/4:3/w_2119,h_1589,c_limit/friends.jpg"
-      class="avatar" />
     <div class="group-info">
       <div v-if="planning && planning.activitiesDay?.length">
         <div v-for="day in planning.activitiesDay" :key="day.id" class="day-card">
@@ -138,19 +161,29 @@ async function getPlanning(newPlanningId) {
     </div>
 
     <div class="add-member-section">
-      <button v-if="!showInput" @click="toggleInput" class="add-btn">
+      <button class="add-btn" @click="toggleOpenGroups">
         Partager le planning
       </button>
-      <div v-if="showInput" class="add-member-form">
-        <input type="texte" v-model="groupeName" @keyup.enter="sharePlanning" @input="clearMessages"
-          placeholder="Nom du groupe" class="search-input"
-          :class="{ 'error': errorMessage, 'success': successMessage }" />
-        <button @click="sharePlanning" class="add-btn">
-          Confirmer
-        </button>
-        <button @click="toggleInput" class="cancel-btn">
-          Annuler
-        </button>
+      <div v-if="showGroups" class="overlay-planning" @click.self="toggleOpenGroups">
+        <div class="planning-panel">
+          <h2>À qui patager le planning</h2>
+          <div v-if="planning">
+            <div
+              v-for="group in filteredGroups"
+              :key="group.id"
+              class="day-card selectable"
+              :class="{ selected: groupeName === group.id }"
+              @click="groupeName = group.id"
+            >
+              <div>{{ group.name }}</div>
+            </div>
+          <button class="add-btn" @click="sharePlanning">Partager</button>
+          </div>
+        </div>
+        <button class="close-btn" @click="toggleOpenGroups">Fermer</button>
+      </div>
+      <div v-else>
+        <p>Aucun planning disponible.</p>
       </div>
       <div class="messages-inline">
         <div v-if="errorMessage" class="error-message">
@@ -175,13 +208,6 @@ async function getPlanning(newPlanningId) {
   gap: 12px;
 }
 
-.avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
 .group-info {
   flex: 1;
 }
@@ -191,24 +217,11 @@ async function getPlanning(newPlanningId) {
   color: black;
 }
 
-.status {
-  font-size: 12px;
-  color: gray;
-}
-
 .add-member-section {
   display: flex;
   flex-direction: column;
   gap: 8px;
   position: relative;
-}
-
-.add-member-form {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  align-items: center;
-  animation: slideIn 0.3s ease-out;
 }
 
 @keyframes slideIn {
@@ -335,17 +348,78 @@ async function getPlanning(newPlanningId) {
   border: 1px solid #c3e6cb;
 }
 
+.selectable {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.selectable:hover {
+  background-color: #f0f0f0;
+}
+
+.selected {
+  background-color: #d6f5d6;
+  font-weight: bold;
+}
+
+.overlay-planning {
+  position: fixed;
+  color:black;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.planning-panel {
+  width: 20rem;
+  height: 100vh; /* <- FIX: pleine hauteur */
+  background: #fff;
+  padding: 30px;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.2);
+  animation: slideInPlanning 0.3s ease-out;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto; /* <- Ajoute le scroll ici */
+}
+
+
+.planning-panel h2 {
+  margin-bottom:1rem;
+  text-align: center;
+}
+
+
+.planning-panel h3 {
+  margin-bottom:1rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.planning-panel ul {
+ list-style: none;
+}
+
+.close-btn {
+  margin-top: auto;
+  padding: 10px 20px;
+  background-color: #1a1a1a;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
 @media (max-width: 600px) {
   .header {
     flex-direction: column;
     align-items: stretch;
   }
-
-  .add-member-form {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
+  
   .search-input,
   .add-btn,
   .cancel-btn {
@@ -358,15 +432,6 @@ async function getPlanning(newPlanningId) {
 
   .messages-inline .error-message,
   .messages-inline .success-message {
-    width: 100%;
-    text-align: center;
-  }
-
-  .avatar {
-    align-self: center;
-  }
-
-  .group-info {
     width: 100%;
     text-align: center;
   }
