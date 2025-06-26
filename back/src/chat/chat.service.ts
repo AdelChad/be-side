@@ -27,7 +27,7 @@ export class ChatService {
 
         @InjectRepository(ActivityDay)
         private readonly activityDayRepository: Repository<ActivityDay>,
-                
+
         @InjectRepository(Clash)
         private clashRepository: Repository<Clash>,
 
@@ -36,13 +36,13 @@ export class ChatService {
 
         @InjectRepository(Activities)
         private activitiesRepository: Repository<Activities>,
-        
+
         @InjectRepository(Restaurant)
         private restaurantRepository: Repository<Restaurant>,
-    ) {}
+    ) { }
 
     async saveMessage(channelId: number, content: string, client: User): Promise<Message> {
-        const channel = await this.channelRepository.findOne({ where: { id : channelId } });
+        const channel = await this.channelRepository.findOne({ where: { id: channelId } });
         if (!channel) throw new NotFoundException('Channel not found');
 
         const message = new Message();
@@ -51,9 +51,7 @@ export class ChatService {
         message.channel = channel
         message.author = client
 
-        message.save()
-
-        return message;
+        return await this.messageRepository.save(message);
     }
 
     async getMessages(channelId: number): Promise<Message[]> {
@@ -85,7 +83,7 @@ export class ChatService {
 
         const activityDay = await this.activityDayRepository.find({
             where: { planning: { id: planning.id } },
-            relations: ['morningActivity', 'noondayActivity','afternoonActivity','eveningActivity','nightActivity','breakfastRestaurant','lunchRestaurant','dinnerRestaurant'],
+            relations: ['morningActivity', 'noondayActivity', 'afternoonActivity', 'eveningActivity', 'nightActivity', 'breakfastRestaurant', 'lunchRestaurant', 'dinnerRestaurant'],
         });
 
         if (!activityDay) {
@@ -95,7 +93,7 @@ export class ChatService {
         return activityDay;
     }
 
-    async getClashsByChannel(channelId: number){
+    async getClashsByChannel(channelId: number, userId: number) {
         const channel = await this.channelRepository.findOne({
             where: { id: channelId },
             relations: ['clashes'],
@@ -114,28 +112,30 @@ export class ChatService {
             throw new NotFoundException('Clashes not found for this group');
         }
 
-        const clashIds = clashes.map(c => c.id)
+        const clashIds = clashes.map(c => c.id);
 
         const votes = await this.voteRepository.find({
             where: {
-                clash: {
-                id: In(clashIds)
-                }
+                clash: { id: In(clashIds) },
             },
             relations: ['user', 'clash'],
         });
 
-        const votesByClashId = clashIds.reduce((acc, id) => {
-            acc[id] = votes.filter(vote => vote.clash.id === id);
-            return acc;
-        }, {} as Record<number, Vote[]>);
+        return clashes.map(clash => {
+            const clashVotes = votes.filter(v => v.clash.id === clash.id);
+            const votesA = clashVotes.filter(v => v.option === 'A').length;
+            const votesB = clashVotes.filter(v => v.option === 'B').length;
 
-        const clashesWithVotes = clashes.map(clash => ({
-        ...clash,
-        votes: votesByClashId[clash.id] || []
-        }));
+            const userVote = clashVotes.find(v => v.user.id === userId)?.option || null;
 
-        return clashesWithVotes;
+            return {
+                ...clash,
+                votes: clashVotes,
+                votesA,
+                votesB,
+                userVote,
+            };
+        });
     }
 
     async createClash(createClashDto: CreateClashDto, creator: User): Promise<Clash> {
@@ -148,12 +148,17 @@ export class ChatService {
 
         if (!channel) throw new NotFoundException('Channel not found');
 
-        const groupe = channel.groupe;
-        const isCreator = groupe.creator.id === creator.id;
-        const isMember = groupe.members.some(member => member.id === creator.id);
+        const group = channel.groupe;
+
+        const isCreator = group.creator.id === creator.id;
+        const isMember = group.members.some(member => member.id === creator.id);
 
         if (!isCreator && !isMember) {
-            throw new ForbiddenException("You are not authorized to create a clash in this groupe.");
+            throw new ForbiddenException("You are not authorized to create a clash in this group.");
+        }
+
+        if (optionAId === optionBId) {
+            throw new BadRequestException(`${type === 'activity' ? 'Activities' : 'Restaurants'} must be different`);
         }
 
         const clash = new Clash();
@@ -163,7 +168,7 @@ export class ChatService {
         if (type === 'activity') {
             const [activityA, activityB] = await Promise.all([
                 this.activitiesRepository.findOne({ where: { id: optionAId } }),
-                this.activitiesRepository.findOne({ where: { id: optionBId } })
+                this.activitiesRepository.findOne({ where: { id: optionBId } }),
             ]);
 
             if (!activityA || !activityB) throw new NotFoundException('Activity not found');
@@ -173,8 +178,8 @@ export class ChatService {
 
         } else if (type === 'restaurant') {
             const [restaurantA, restaurantB] = await Promise.all([
-            this.restaurantRepository.findOne({ where: { id: optionAId } }),
-            this.restaurantRepository.findOne({ where: { id: optionBId } }),
+                this.restaurantRepository.findOne({ where: { id: optionAId } }),
+                this.restaurantRepository.findOne({ where: { id: optionBId } }),
             ]);
 
             if (!restaurantA || !restaurantB) throw new NotFoundException('Restaurant not found');
@@ -186,9 +191,9 @@ export class ChatService {
             throw new BadRequestException('Invalid clash type');
         }
 
-        await clash.save();
-        return clash;
+        return await this.clashRepository.save(clash);
     }
+
 
     async submitVote(voteDto: VoteDto, user: User): Promise<Vote> {
         const { clashId, option } = voteDto;
@@ -226,6 +231,54 @@ export class ChatService {
         vote.option = option;
         vote.user = user;
 
-        return await vote.save();
+        return await this.voteRepository.save(vote);
+    }
+
+    async getAllActivities(): Promise<Activities[]> {
+        return this.activitiesRepository.find({
+            relations: ['categActiv', 'favorits'],
+            order: { name: 'ASC' },
+        });
+    }
+
+    async getAllRestaurants(): Promise<Restaurant[]> {
+        return this.restaurantRepository.find({
+            relations: ['categRestau', 'favorits'],
+            order: { name: 'ASC' },
+        });
+    }
+
+    async getClashWithVotes(clashId: number, userId: number) {
+        const clash = await this.clashRepository.findOne({
+            where: { id: clashId },
+            relations: [
+                'activityOptionA',
+                'activityOptionB',
+                'restaurantOptionA',
+                'restaurantOptionB',
+                'channel',
+            ],
+        });
+
+        if (!clash) {
+            throw new NotFoundException('Clash not found');
+        }
+
+        const votes = await this.voteRepository.find({
+            where: { clash: { id: clashId } },
+            relations: ['user'],
+        });
+
+        const votesA = votes.filter(v => v.option === 'A').length;
+        const votesB = votes.filter(v => v.option === 'B').length;
+
+        const userVote = votes.find(v => v.user?.id === userId);
+
+        return {
+            ...clash,
+            votesA,
+            votesB,
+            userVote: userVote?.option || null,
+        };
     }
 }
