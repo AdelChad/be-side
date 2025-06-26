@@ -1,80 +1,144 @@
 <script setup>
-  import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
-  import { io } from 'socket.io-client'
-  import { jwtDecode } from 'jwt-decode'
-  import Header from './Header.vue'
-  import { selectedPlanningId } from '../../stores/planning'
+import { ref, watch, onMounted } from 'vue'
+import { jwtDecode } from 'jwt-decode'
+import { selectedPlanningId } from '../../stores/planning'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { library } from '@fortawesome/fontawesome-svg-core'
+import { faPlus } from '@fortawesome/free-solid-svg-icons'
+import Header from './Header.vue'
 
-  const planning = ref(null)
-  const token = localStorage.getItem('access_token')
+library.add(faPlus)
 
-  let userId = null
-  if (token) {
-    try {
-      const decoded = jwtDecode(token)
-      userId = decoded.sub
-    } catch (e) {
-      console.error('Token invalide ou corrompu', e)
-    }
+const planning = ref(null)
+const token = localStorage.getItem('access_token')
+const planningsList = ref([]) // 🆕 stocker tous les plannings
+
+let userId = null
+if (token) {
+  try {
+    const decoded = jwtDecode(token)
+    userId = decoded.sub
+  } catch (e) {
+    console.error('Token invalide ou corrompu', e)
   }
+}
 
-  async function getPlanning(newPlanningId) {
-    try {
-      const response = await fetch(`http://localhost:3000/plannings/${newPlanningId}`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`Erreur ${response.status}`);
-      }
-
-      const data = await response.json();
-      planning.value = data;
-    } catch (error) {
-      console.error('Erreur lors de la récupération du planning :', error);
-    }
-  }
-
-  watch(selectedPlanningId, (newPlanningId) => {
-    if (newPlanningId) {
-      getPlanning(newPlanningId)
-    }
-  })
-
-  function formatDate(date) {
-    return new Date(date).toLocaleDateString('fr-FR', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+// 🆕 Fonction pour récupérer tous les plannings
+async function fetchPlannings() {
+  try {
+    const response = await fetch('http://localhost:3000/plannings', {
+      headers: { Authorization: `Bearer ${token}` }
     })
+    if (!response.ok) throw new Error('Erreur lors du chargement des plannings')
+    planningsList.value = await response.json()
+
+    // Si aucun planning n’est sélectionné, prendre le premier
+    if (!selectedPlanningId.value && planningsList.value.length > 0) {
+      selectedPlanningId.value = planningsList.value[0].id
+    }
+  } catch (err) {
+    console.error(err)
   }
-</script>
+}
+
+const isLoading = ref(true)
+
+async function getPlanning(newPlanningId) {
+  try {
+    isLoading.value = true
+    const response = await fetch(`http://localhost:3000/plannings/${newPlanningId}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    if (!response.ok) throw new Error(`Erreur ${response.status}`)
+    planning.value = await response.json()
+  } catch (error) {
+    console.error('Erreur lors de la récupération du planning :', error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+
+watch(selectedPlanningId, (newId) => {
+  if (newId) getPlanning(newId)
+})
+
+onMounted(async () => {
+  await fetchPlannings()
+
+
+  if (selectedPlanningId.value) {
+    getPlanning(selectedPlanningId.value)
+  }
+})
+
+
+function formatDate(date) {
+  return new Date(date).toLocaleDateString('fr-FR', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })
+}
+</script> 
 
 <template>
   <div class="chat-window">
-    <Header />
-    <div class="chat-content">  
-      <div v-if="planning && planning.activitiesDay?.length">
+    <Header :planning="planning" />
+    <div class="chat-content planning-panel">
+      <h2>Mon planning</h2>
+
+      <div v-if="planning?.activitiesDay?.length">
         <div v-for="day in planning.activitiesDay" :key="day.id" class="day-card">
-          <ul>
-            <li>Petit déjeuner : {{ day.breakfastRestaurant?.name || 'Non défini' }}</li>
-            <li>Activité du matin : {{ day.morningActivity?.name || 'Non défini' }}</li>
-            <li>Activité de midi : {{ day.noondayActivity?.name || 'Non défini' }}</li>
-            <li>Déjeuner : {{ day.lunchRestaurant?.name || 'Non défini' }}</li>
-            <li>Après-midi : {{ day.afternoonActivity?.name || 'Non défini' }}</li>
-            <li>Soirée : {{ day.eveningActivity?.name || 'Non défini' }}</li>
-            <li>Dîner : {{ day.dinnerRestaurant?.name || 'Non défini' }}</li>
-            <li>Nuit : {{ day.nightActivity?.name || 'Non défini' }}</li>
+          
+          <ul class="planning-list">
+            <li
+              v-for="step in [
+                { key: 'breakfastRestaurant', label: 'Petit déjeuner', type: 'restaurant' },
+                { key: 'morningActivity', label: 'Activité du matin', type: 'activity' },
+                { key: 'noondayActivity', label: 'Activité de midi', type: 'activity' },
+                { key: 'lunchRestaurant', label: 'Déjeuner', type: 'restaurant' },
+                { key: 'afternoonActivity', label: 'Après-midi', type: 'activity' },
+                { key: 'eveningActivity', label: 'Soirée', type: 'activity' },
+                { key: 'dinnerRestaurant', label: 'Dîner', type: 'restaurant' },
+                { key: 'nightActivity', label: 'Nuit', type: 'activity' }
+              ]"
+              :key="step.key"
+              class="planning-step"
+            >
+              <div class="step-content">
+                <h4>{{ step.label }}</h4>
+                <div class="image-wrapper">
+                  <router-link
+                    v-if="day[step.key]"
+                    :to="`/${step.type === 'restaurant' ? 'restaurants' : 'activities'}/${day[step.key].id}`"
+                    class="planning-link"
+                  >
+                    <img :src="day[step.key].photo" :alt="step.label" class="planning-photo" />
+                    <div class="overlay-text">
+                      {{ day[step.key].name }}<br />
+                      <span class="city">{{ day[step.key].city }}</span>
+                    </div>
+                  </router-link>
+                  <router-link v-else to="/" class="planning-placeholder-button">
+                    <font-awesome-icon :icon="['fas', 'plus']" class="fa-plus-icon" />
+                  </router-link>
+                </div>
+              </div>
+            </li>
           </ul>
         </div>
       </div>
-      <div v-else>
-        <p>Aucun planning disponible.</p>
+     <div v-else>
+      <div v-if="isLoading" class="spinner-container">
+        <div class="spinner"></div>
       </div>
+      <p v-else>Aucun planning disponible.</p>
+    </div>
     </div>
   </div>
 </template>
@@ -85,89 +149,127 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background-image: url('../../assets/background beside jaune.png');
+  background-color: white;
   background-size: cover;
   background-position: center;
 }
-/* Nouvelle structure pour isoler messages + input */
+
 .chat-content {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.chat-messages {
-  flex: 1;
   overflow-y: auto;
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  padding: 2rem;
 }
 
-.message {
-  max-width: 60%;
-  padding: 12px;
-  border-radius: 16px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+.planning-panel {
+  color:black
 }
 
-.message.received { 
-  background-color: white;
-  color: black;
-  align-self: flex-start;
+.planning-panel h2 {
+
+  margin-bottom: 2rem;
 }
 
-.message.sent {
-  background-color: #e99415;
-  align-self: flex-end;
+.day-card {
+  background: white;
+  padding: 1rem;
+  margin-bottom: 2rem;
+ 
 }
 
-.author {
-  font-size: 12px;
-  font-weight: bold;
-  margin-bottom: 2px;
-  color: #3a3a3a;
+.day-card h3 {
+  text-align: center;
+  font-weight: 500;
+  margin-bottom: 1rem;
 }
 
-.timestamp {
-  font-size: 12px;
-  text-align: right;
-  margin-top: 4px;
-  color: gray;
+.planning-list {
+  list-style: none;
+  padding: 0;
 }
 
-.chat-input {
-  display: flex;
-  align-items: center;
-  padding: 12px;
-  border-top: 1px solid #ccc;
-  background-color: #fff;
+.planning-step {
+  margin-bottom: 1.5rem;
 }
 
-.chat-input input {
-  flex: 1;
+.step-content h4 {
+  margin-bottom: 0.5rem;
+  font-weight: 400;
+}
+
+.image-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.planning-photo {
+  width: 50%;
+  height: 20rem;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.overlay-text {
+  width: 50%;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
   padding: 8px 12px;
-  border: 1px solid #ccc;
-  border-radius: 20px;
-  outline: none;
-  font-size: 14px;
-}
-
-.send-button {
-  margin-left: 8px;
-  padding: 8px 12px;
-  background-color: #e99415;
+  background: rgba(0, 0, 0, 0.6);
   color: white;
-  border: none;
-  border-radius: 20px;
-  cursor: pointer;
-  font-size: 16px;
+  font-weight: 500;
+  font-size: 14px;
+  border-radius: 0 0 8px 8px;
 }
 
-.send-button:hover {
-  background-color: #a27f4a;
+.city {
+  font-size: 12px;
+  font-weight: 300;
+}
+
+.planning-placeholder-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100px;
+  width: 50%;
+  background-color: #f0f0f0;
+  color: #1a1a1a;
+  font-size: 32px;
+  font-weight: bold;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.planning-placeholder-button:hover {
+  background-color: #e0e0e0;
+}
+
+.fa-plus-icon {
+  font-size: 20px;
+}
+
+.spinner-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 5px solid #ccc;
+  border-top-color: #1a1a1a;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 </style>
