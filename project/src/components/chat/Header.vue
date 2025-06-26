@@ -3,10 +3,10 @@ import { ref, watch } from 'vue'
 import { io } from 'socket.io-client'
 import { jwtDecode } from 'jwt-decode'
 import { selectedGroupId } from '../../stores/chat'
-    import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-    import { library } from '@fortawesome/fontawesome-svg-core'
-    import { faCalendarDays, faPlus } from '@fortawesome/free-solid-svg-icons'
-    library.add(faCalendarDays, faPlus)
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { library } from '@fortawesome/fontawesome-svg-core'
+import { faCalendarDays, faPlus } from '@fortawesome/free-solid-svg-icons'
+library.add(faCalendarDays, faPlus)
 
 const token = localStorage.getItem('access_token')
 const planning = ref([])
