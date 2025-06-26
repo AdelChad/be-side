@@ -140,7 +140,7 @@ export class PlanningService {
 
     async modifyActivityDay(activitiesDayUpdateDto: PlanningUpdateDto, user: User): Promise<Planning> {
         try {
-            const { id, date, activities, restaurants, groupeId } = activitiesDayUpdateDto;
+            const { id, activities, restaurants, groupeId } = activitiesDayUpdateDto;
         
             const planning = await this.planningRepository.findOne({
                 where: { id },
@@ -172,9 +172,6 @@ export class PlanningService {
                 }
                 planning.group = groupe;
             }
-            else{
-                planning.group = null
-            }
         
             const fullActivities = await Promise.all(
                 activities.map(({ id }) => this.activitiesRepository.findOne({ where: { id } }))
@@ -183,8 +180,6 @@ export class PlanningService {
             const fullRestaurants = await Promise.all(
                 restaurants.map(({ id }) => this.restaurantsRepository.findOne({ where: { id } }))
             );
-        
-            activityDay.date = date;
             const times = ['morningActivity', 'noondayActivity', 'afternoonActivity', 'eveningActivity', 'nightActivity'];
 
             times.forEach(timeSlot => {
