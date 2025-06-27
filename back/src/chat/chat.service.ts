@@ -252,6 +252,7 @@ export class ChatService {
         const clash = await this.clashRepository.findOne({
             where: { id: clashId },
             relations: [
+                'creator',
                 'activityOptionA',
                 'activityOptionB',
                 'restaurantOptionA',

@@ -13,7 +13,6 @@ onMounted(() => {
   if (token) {
     try {
       const decoded = jwtDecode(token)
-      console.log('decoded token:', decoded)
       userId.value = decoded.id
     } catch (e) {
       console.error('Token invalide', e)
@@ -53,8 +52,6 @@ const conversationFlow = computed(() => {
   return allItems.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 });
 
-
-
 const filteredOptions = computed(() => {
   const options = clashType.value === 'activity' ? activities.value : restaurants.value
   return options.filter(option => option.name.toLowerCase().includes(searchQuery.value.toLowerCase()))
@@ -66,7 +63,7 @@ function joinChannel(channelId) {
   socket.emit('joinChannel', { channelId })
   socket.emit('getMessages', { channelId })
   socket.emit('getPlanning', { channelId })
-  socket.emit('getClashes', { channelId: selectedGroupId.value, userId })
+  socket.emit('getClashes', { channelId: selectedGroupId.value, userId: userId.value })
   socket.emit('get_all_activities', { channelId })
   socket.emit('get_all_restaurants', { channelId })
 
@@ -125,9 +122,8 @@ onBeforeUnmount(() => {
 })
 
 function formatClash(clash) {
-  const creatorId = clash.creator?.id
-  const isSent = String(creatorId) === String(userId.value)
-
+  const creatorId = clash.creator?.id || clash.creatorId
+  const isCreator = String(creatorId) === String(userId.value)
   const clashType = clash.activityOptionA ? 'activity' : 'restaurant'
 
   return {
@@ -144,12 +140,11 @@ function formatClash(clash) {
     isFinished: clash.isFinished || false,
     timestamp: new Date(clash.createdAt).toLocaleTimeString(),
     createdAt: clash.createdAt,
-    sent: isSent,
+    sent: isCreator,
     clashType,
     type: 'clash'
   }
 }
-
 function openClashModal() {
   showClashModal.value = true
   selectedOptionA.value = null
