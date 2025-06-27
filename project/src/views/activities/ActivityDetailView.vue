@@ -1,21 +1,29 @@
 <script setup lang="ts">
     import { ref, onMounted } from 'vue'
     import { useRoute } from 'vue-router'
+    import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+    import { library } from '@fortawesome/fontawesome-svg-core'
+    import {  faHeart, faLocationDot, faStar, faShare, faPhone } from '@fortawesome/free-solid-svg-icons'
+    library.add(faHeart,faStar,faLocationDot,faShare, faPhone)
 
     const route = useRoute()
 
-    interface Activity {
-        id: string
-        name: string
-        photo: string
-        photos?: string[]
-        country: string
-        address: string
-        city: string
-        rating: number
-        phoneNumber: string 
-        type: 'activity'
-    }
+  interface Activity {
+  id: string
+  name: string
+  photo: string
+  photos?: string[]
+  country: string
+  address: string
+  city: string
+  rating: number
+  phoneNumber: string 
+  type: 'activity'
+  categActiv: {
+    id: string
+    name: string
+  }[] 
+}
 
     const activity = ref<Activity>()
     const token = localStorage.getItem('access_token') 
@@ -94,14 +102,20 @@
         <div class="left-info">
           <h1 class="activity-title">{{ activity?.name }}</h1>
           <p class="activity-location">{{ activity?.address }}</p>
+
           <div class="activity-rating">
-            <span class="star-icon">✆</span>
-            <span>{{ activity?.phoneNumber }}</span>
-          </div>
-          <div class="activity-rating">
-            <span class="star-icon">★</span>
+            <span class="star-icon"><font-awesome-icon :icon="['fas', 'star']" class="fa-plus-icon" /></span>
             <span>{{ activity?.rating }}</span>
           </div>
+        <div class="activity-tags">
+          <span 
+            class="activity-tag" 
+            v-for="(categ) in activity?.categActiv" 
+            :key="categ.id"
+          >
+            {{ categ.name }}
+          </span>
+        </div>
           <div class="description-title">Description</div>
           <div class="activity-description">
             Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam nulla enim, imperdiet at volutpat nec, rhoncus in lorem. Vestibulum luctus sit amet massa nec cursus. Ut ut nunc leo. Mauris egestas laoreet sem ac pellentesque. Proin ultrices leo ut laoreet pretium. Integer lacinia euismod magna, nec posuere ex accumsan vel. Etiam vulputate nisi eget libero tristique, a maximus arcu efficitur. Nunc ac leo malesuada dolor ultricies malesuada.
@@ -109,16 +123,16 @@
 
           <div class="activity-actions">
             <button :class="['action-btn favorite-btn', { 'favorite-active': isFavorite }]" @click="toggleFavorite">
-              <span class="action-icon heart-icon">♥</span>
+              <span class="action-icon heart-icon"><font-awesome-icon :icon="['fas', 'heart']" class="fa-plus-icon" /></span>
             </button>
             <button class="action-btn share-btn">
-              <span class="action-icon">↗</span>
+              <span class="action-icon"><font-awesome-icon :icon="['fas', 'share']" class="fa-plus-icon" /></span>
             </button>
             <button class="action-btn call-btn">
-              <span class="action-icon">📞</span>
+              <span class="action-icon"><font-awesome-icon :icon="['fas', 'phone']" class="fa-plus-icon" /></span>
             </button>
             <button class="action-btn directions-btn">
-              <span class="action-icon">⤧</span>
+              <span class="action-icon"><font-awesome-icon :icon="['fas', 'location-dot']" class="fa-plus-icon" /></span>
             </button>
           </div>
         </div>
@@ -229,7 +243,7 @@
         display: flex;
         flex-wrap: wrap;
         gap: var(--space-2);
-        margin-bottom: var(--space-4);
+        margin-bottom: var(--space-2);
     }
 
     .activity-tag {
@@ -238,6 +252,7 @@
         border-radius: 20px;
         font-size: 0.875rem;
         color: var(--color-neutral-700);
+        margin:0.1rem;
     }
 
     .activity-description {

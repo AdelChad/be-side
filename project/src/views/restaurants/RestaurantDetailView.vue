@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { library } from '@fortawesome/fontawesome-svg-core'
+import {  faHeart, faLocationDot, faStar, faShare, faPhone } from '@fortawesome/free-solid-svg-icons'
+library.add(faHeart,faStar,faLocationDot,faShare, faPhone)
 
 const route = useRoute()
 
@@ -15,6 +19,10 @@ interface Restaurant {
   rating: number
   phoneNumber: string
   type: 'restaurant'
+  categRestau: {
+    id: string
+    name: string
+  }[]
 }
 
 const restaurant = ref<Restaurant>()
@@ -75,12 +83,17 @@ function nextImage() {
           <h1 class="restaurant-title">{{ restaurant?.name }}</h1>
           <p class="restaurant-location">{{ restaurant?.address }}</p>
           <div class="restaurant-rating">
-            <span class="star-icon">✆</span>
-            <span>{{ restaurant?.phoneNumber }}</span>
-          </div>
-          <div class="restaurant-rating">
-            <span class="star-icon">★</span>
+            <span class="star-icon"><font-awesome-icon :icon="['fas', 'star']" class="fa-plus-icon" /></span>
             <span>{{ restaurant?.rating }}</span>
+          </div>
+          <div class="restaurant-tags">
+          <span 
+            class="restaurant-tag" 
+            v-for="(categ) in restaurant?.categRestau" 
+            :key="categ.id"
+          >
+            {{ categ.name }}
+          </span>
           </div>
           <div class="description-title">Description</div>
           <div class="restaurant-description">
@@ -89,16 +102,16 @@ function nextImage() {
 
           <div class="restaurant-actions">
             <button :class="['action-btn favorite-btn', { 'favorite-active': isFavorite }]" @click="toggleFavorite">
-              <span class="action-icon heart-icon">♥</span>
+              <span class="action-icon heart-icon"><font-awesome-icon :icon="['fas', 'heart']" class="fa-plus-icon" /></span>
             </button>
             <button class="action-btn share-btn">
-              <span class="action-icon">↗</span>
+              <span class="action-icon"><font-awesome-icon :icon="['fas', 'share']" class="fa-plus-icon" /></span>
             </button>
             <button class="action-btn call-btn">
-              <span class="action-icon">📞</span>
+              <span class="action-icon"><font-awesome-icon :icon="['fas', 'phone']" class="fa-plus-icon" /></span>
             </button>
             <button class="action-btn directions-btn">
-              <span class="action-icon">⤧</span>
+              <span class="action-icon"><font-awesome-icon :icon="['fas', 'location-dot']" class="fa-plus-icon" /></span>
             </button>
           </div>
         </div>
@@ -266,6 +279,22 @@ function nextImage() {
   flex-direction: column;
   gap: 2rem;
 }
+
+   .restaurant-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+        margin-bottom: var(--space-2);
+    }
+
+    .restaurant-tag {
+        padding: var(--space-1) var(--space-2);
+        background-color: var(--color-neutral-100);
+        border-radius: 20px;
+        font-size: 0.875rem;
+        color: var(--color-neutral-700);
+        margin:0.1rem;
+    }
 
 @media (min-width: 768px) {
   .layout-split {
