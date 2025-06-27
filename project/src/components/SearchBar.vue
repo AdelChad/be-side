@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { library } from '@fortawesome/fontawesome-svg-core'
+import { faMagnifyingGlass, faCaretDown } from '@fortawesome/free-solid-svg-icons'
+library.add(faMagnifyingGlass, faCaretDown)
 
 const router = useRouter()
 const searchText = ref('')
@@ -64,7 +68,7 @@ onUnmounted(() => {
     <div class="dropdown" ref="dropdownRef">
       <button class="dropdown-btn" @click="toggleDropdown">
         {{types.find(t => t.value === selectedType)?.label}}
-        <span class="arrow" :class="{ open: dropdownOpen }">▼</span>
+        <span class="arrow" :class="{ open: dropdownOpen }"><font-awesome-icon :icon="['fas', 'caret-down']" class="fa-plus-icon" /></span>
       </button>
       <ul v-if="dropdownOpen" class="dropdown-menu">
         <li v-for="typeOption in types" :key="typeOption.value" @click="selectType(typeOption.value)">
@@ -75,7 +79,7 @@ onUnmounted(() => {
     <input type="text" v-model="searchText" class="search-input" :placeholder="placeholderText"
       @keyup.enter="submitSearch" />
     <button class="search-btn" @click="submitSearch">
-      🔍︎
+      <font-awesome-icon :icon="['fas', 'magnifying-glass']" class="fa-plus-icon" />
     </button>
   </div>
 </template>
@@ -160,5 +164,6 @@ onUnmounted(() => {
   cursor: pointer;
   padding: 0.4rem;
   color: #333;
+  margin-right:1rem;
 }
 </style>

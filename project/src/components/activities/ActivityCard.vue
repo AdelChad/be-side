@@ -2,6 +2,10 @@
 import { computed, onMounted } from 'vue'
 import { useFavoritesStore } from '../../stores/fav';
 import { useUserStore } from '../../stores/user';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { library } from '@fortawesome/fontawesome-svg-core'
+import {  faHeart, faLocationDot, faStar, faShare } from '@fortawesome/free-solid-svg-icons'
+library.add(faHeart,faStar,faLocationDot,faShare)
 
 const props = defineProps<{
   activity: {
@@ -51,14 +55,16 @@ onMounted(async () => {
                 @click="toggleFavorite"
                 :aria-label="isFavorite ? 'Remove from favorites' : 'Add to favorites'"
             >
-                <span class="heart-icon">♥</span>
+                <span class="heart-icon">
+                     <font-awesome-icon :icon="['fas', 'heart']" class="fa-plus-icon" />
+                </span>
             </button>
 
             <div class="activity-overlay">
                 <h3 class="activity-title">{{ activity.name }}</h3>
                 <p class="activity-location">{{ activity.address }}</p>
                 <div class="activity-rating">
-                    <span class="star-icon">★</span>
+                    <span class="star-icon"> <font-awesome-icon :icon="['fas', 'star']" class="fa-plus-icon" /></span>
                     <span>{{ activity.rating }}</span>
                 </div>
             </div>

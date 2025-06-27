@@ -2,6 +2,10 @@
 import { computed, onMounted } from 'vue'
 import { useFavoritesStore } from '../../stores/fav'
 import { useUserStore } from '../../stores/user'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { library } from '@fortawesome/fontawesome-svg-core'
+import {  faHeart, faLocationDot, faStar, faShare, faPhone } from '@fortawesome/free-solid-svg-icons'
+library.add(faHeart,faStar,faLocationDot,faShare, faPhone)
 
 const props = defineProps<{
   restaurant: {
@@ -14,6 +18,10 @@ const props = defineProps<{
     rating: number
     phoneNumber: string
     type: 'restaurant'
+    categRestau: {
+    id: string
+    name: string
+  }[]
   }
 }>()
 
@@ -48,14 +56,14 @@ onMounted(async () => {
         @click="toggleFavorite"
         :aria-label="isFavorite ? 'Remove from favorites' : 'Add to favorites'"
       >
-        <span class="heart-icon">♥</span>
+        <span class="heart-icon"><font-awesome-icon :icon="['fas', 'heart']" class="fa-plus-icon" /></span>
       </button>
 
       <div class="restaurant-overlay">
         <h3 class="restaurant-title">{{ restaurant.name }}</h3>
         <p class="restaurant-location">{{ restaurant.address }}</p>
         <div class="restaurant-rating">
-          <span class="star-icon">★</span>
+          <span class="star-icon"><font-awesome-icon :icon="['fas', 'star']" class="fa-plus-icon" /></span>
           <span>{{ restaurant.rating }}</span>
         </div>
       </div>
