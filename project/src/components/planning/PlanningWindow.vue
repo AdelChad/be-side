@@ -358,7 +358,7 @@
   }
 
   .overlay-text {
-    width: 50%;
+    width: 100%;
     position: absolute;
     bottom: 0;
     left: 0;
@@ -434,6 +434,13 @@
   @keyframes spin {
     to {
       transform: rotate(360deg);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .image-wrapper[data-v-3d190908] {
+      position: relative;
+      width: 100%
     }
   }
 </style>
