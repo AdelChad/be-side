@@ -344,7 +344,7 @@ function formatDate(date) {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background-image: url('../../assets/background beside jaune.png');
+  background-image: url('../../assets/background beside 2.png');
   background-size: cover;
   background-position: center;
   height: 100%;
