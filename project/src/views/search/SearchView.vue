@@ -213,121 +213,111 @@
             console.log(city)
         }
     }
+
+    function previousStep() {
+  if (activeStep.value > 0) {
+    activeStep.value--;
+  }
+}
 </script>
 
 <template>
-    <div class="search-view">
-        <div class="container">
-            <div class="search-container">
-                <div class="search-progress">
-                    <div 
-                    v-for="(step, index) in steps" 
-                    :key="step.id" 
-                    class="progress-item"
-                    :class="{ active: index <= activeStep, completed: index < activeStep }"
-                    >
-                        <div class="progress-circle">
-                            <span v-if="index < activeStep" class="check-icon">✓</span>
-                            <span v-else>{{ index + 1 }}</span>
-                        </div>
-                        <div class="progress-text">
-                            <h4 class="progress-title">{{ step.id === 'type' ? 'Catégorie' : step.id === 'distance' ? 'Localisation' : 'Exigences' }}</h4>
-                               <p class="progress-desc">
-                                {{
-                                    step.id === 'type'
-                                    ? 'Choisissez entre une activité ou un restaurant.'
-                                    : step.id === 'distance'
-                                    ? 'Sélectionnez la localisation de votre sortie.'
-                                    : 'Précisez vos préférences pour une recherche plus ciblée.'
-                                }}
-                            </p>    
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Search content -->
-                <div class="search-content">
-                    <div class="search-step" v-if="activeStep === 0">
-                        <h2 class="step-title">{{ steps[activeStep].title }}</h2>
-                        <p class="step-description">{{ steps[activeStep].description }}</p>
-                        
-                        <div class="type-selection">
-                            <button 
-                            class="type-btn activity-btn" 
-                            :class="{ active: searchType === 'activity' }"
-                            @click="selectType('activity')"
-                            >
-                            Une activité
-                            </button>
-                            <button 
-                            class="type-btn restaurant-btn" 
-                            :class="{ active: searchType === 'restaurant' }"
-                            @click="selectType('restaurant')"
-                            >
-                            Un restaurant
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="search-step" v-else-if="activeStep === 1">
-                        <h2 class="step-title">{{ steps[activeStep].title }}</h2>
-                        <p class="step-description">{{ steps[activeStep].description }}</p>
-                        <button 
-                            v-for="city in cities"
-                            :key="city.id" 
-                            class="tag-btn"
-                            :class="{ selected: city.selected }"
-                            @click="toggleCity(city.id)"
-                        >
-                            {{ city.city }}
-                        </button>
-                    </div>
-                    
-                    <div class="search-step" v-else-if="activeStep === 2">
-                        <h2 class="step-title">{{ steps[activeStep].title }}</h2>
-                        <p class="step-description">{{ steps[activeStep].description }}</p>
-                        
-                        <div class="preferences-section">
-                            <h3 class="section-subtitle">Sélectionnez des tags pour affiner votre recherche</h3>
-                            <div class="tags-container">
-                                <div v-if="searchType === 'activity'">
-                                    <button 
-                                        v-for="tag in activitiesTags" 
-                                        :key="tag.id"
-                                        class="tag-btn"
-                                        :class="{ selected: tag.selected }"
-                                        @click="toggleTag(tag.id, tag.type)"
-                                    >
-                                        {{ tag.name }}
-                                    </button>
-                                </div>
-                                <div v-else-if="searchType === 'restaurant'">
-                                    <button 
-                                        v-for="tag in restaurantsTags" 
-                                        :key="tag.id"
-                                        class="tag-btn"
-                                        :class="{ selected: tag.selected }"
-                                        @click="toggleTag(tag.id, tag.type)"
-                                    >
-                                        {{ tag.name }}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Continue button -->
-                    <button 
-                    class="btn-continue"
-                    :disabled="(activeStep === 0 && !searchType)"
-                    @click="nextStep"
-                    >
-                        Continuer
-                    </button>
-                </div>
+  <div class="search-view">
+    <div class="container">
+      <div class="search-container">
+        <div class="search-progress">
+          <div
+            v-for="(step, index) in steps"
+            :key="step.id"
+            class="progress-item"
+            :class="{ active: index <= activeStep, completed: index < activeStep }"
+          >
+            <div class="progress-circle">
+              <span v-if="index < activeStep" class="check-icon">✓</span>
+              <span v-else>{{ index + 1 }}</span>
             </div>
+            <div class="progress-text">
+              <h4 class="progress-title">{{ step.id === 'type' ? 'Catégorie' : step.id === 'distance' ? 'Localisation' : 'Exigences' }}</h4>
+              <p class="progress-desc">
+                {{
+                  step.id === 'type'
+                    ? 'Choisissez entre une activité ou un restaurant.'
+                    : step.id === 'distance'
+                    ? 'Sélectionnez la localisation de votre sortie.'
+                    : 'Précisez vos préférences pour une recherche plus ciblée.'
+                }}
+              </p>
+            </div>
+          </div>
         </div>
+
+        <div class="search-content">
+          <div class="search-step" v-if="activeStep === 0">
+            <h2 class="step-title">{{ steps[activeStep].title }}</h2>
+            <p class="step-description">{{ steps[activeStep].description }}</p>
+            <div class="type-selection">
+              <button class="type-btn activity-btn" :class="{ active: searchType === 'activity' }" @click="selectType('activity')">Une activité</button>
+              <button class="type-btn restaurant-btn" :class="{ active: searchType === 'restaurant' }" @click="selectType('restaurant')">Un restaurant</button>
+            </div>
+          </div>
+
+          <div class="search-step" v-else-if="activeStep === 1">
+            <h2 class="step-title">{{ steps[activeStep].title }}</h2>
+            <p class="step-description">{{ steps[activeStep].description }}</p>
+            <button
+              v-for="city in cities"
+              :key="city.id"
+              class="tag-btn"
+              :class="{ selected: city.selected }"
+              @click="toggleCity(city.id)"
+            >
+              {{ city.city }}
+            </button>
+          </div>
+
+          <div class="search-step" v-else-if="activeStep === 2">
+            <h2 class="step-title">{{ steps[activeStep].title }}</h2>
+            <p class="step-description">{{ steps[activeStep].description }}</p>
+            <div class="preferences-section">
+              <h3 class="section-subtitle">Sélectionnez des tags pour affiner votre recherche</h3>
+              <div class="tags-container">
+                <div v-if="searchType === 'activity'">
+                  <button
+                    v-for="tag in activitiesTags"
+                    :key="tag.id"
+                    class="tag-btn"
+                    :class="{ selected: tag.selected }"
+                    @click="toggleTag(tag.id, tag.type)"
+                  >
+                    {{ tag.name }}
+                  </button>
+                </div>
+                <div v-else-if="searchType === 'restaurant'">
+                  <button
+                    v-for="tag in restaurantsTags"
+                    :key="tag.id"
+                    class="tag-btn"
+                    :class="{ selected: tag.selected }"
+                    @click="toggleTag(tag.id, tag.type)"
+                  >
+                    {{ tag.name }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-navigation">
+            <button class="btn-previous" v-if="activeStep > 0" @click="previousStep">Précédent</button>
+            <button class="btn-continue" :disabled="(activeStep === 0 && !searchType)" @click="nextStep">
+              {{ activeStep === steps.length - 1 ? 'Valider' : 'Continuer' }}
+            </button>
+          </div>
+
+        </div>
+      </div>
     </div>
+  </div>
 </template>
 
 <style scoped>
@@ -465,6 +455,25 @@
         background-color: var(--color-accent);
         border-color: var(--color-accent);
         color: var(--color-primary);
+    }
+
+    .btn-previous {
+    padding: var(--space-3) var(--space-5);
+    background-color: transparent;
+    color: var(--color-secondary);
+    border: 1px solid var(--color-neutral-700);
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    width: 100%;
+    max-width: 300px;
+    margin-right:1rem;
+    }
+
+    .btn-previous:hover {
+    background-color: var(--color-neutral-900);
     }
 
     .btn-continue {
