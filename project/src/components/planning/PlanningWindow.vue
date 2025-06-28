@@ -192,8 +192,8 @@
   <div class="chat-window">
     <Header :planning="planning" />
     <div class="chat-content planning-panel">
-      <h4>{{ formatDate(planning.activitiesDay[0].date) }}</h4>
       <div v-if="planning?.activitiesDay?.length">
+        <h4>{{ formatDate(planning.activitiesDay[0].date) }}</h4>
         <div v-for="day in planning.activitiesDay" :key="day.id" class="day-card">
           <ul class="planning-list">
             <li
