@@ -43,6 +43,7 @@
             activities.value = activitiesData.map(a => ({
                 id: a.id,
                 name: a.name,
+                city: a.city,
             }))
         } catch (error) {
             console.error('Erreur lors de la récupération des activités :', error)
@@ -102,7 +103,7 @@
   <div class="modal-overlay" @click.self="$emit('close')">
     <div class="modal-content" @click.stop>
       <div class="modal-header">
-        <h2>➕ Ajouter une activité au planning</h2>
+        <h2>Ajouter une activité au planning</h2>
         <button @click="$emit('close')" class="close-btn">×</button>
       </div>
 
@@ -125,7 +126,7 @@
                 :key="activity.id"
                 :value="activity"
               >
-                {{ activity.name }}
+                {{ activity.name }} -  {{ activity.city }}
               </option>
             </select>
           </div>
@@ -155,6 +156,7 @@
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  color:black;
 }
 
 .modal-content {
@@ -165,6 +167,8 @@
   max-width: 90%;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
 }
+
+
 
 .modal-header,
 .modal-footer {
@@ -190,6 +194,11 @@
 
 .selection-column {
   width: 100%;
+  margin: 1rem 0 1rem 0;
+}
+
+.modal-overlay h3 {
+  margin-bottom: 0.5rem;
 }
 
 .full-width {
@@ -212,7 +221,7 @@
 }
 
 .btn-primary {
-  background-color: #3b82f6;
+  background-color: black;
   color: white;
 }
 
