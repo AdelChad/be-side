@@ -120,13 +120,14 @@
     </div>
 
     <div
-      v-for="chat in filteredChats"
-      :key="chat.id"
-      class="chat-item"
-      @click="selectedGroupId = chat.id"
-    >
-      <div class="chat-name">{{ chat.name }}</div>
-    </div>
+  v-for="chat in filteredChats"
+  :key="chat.id"
+  class="chat-item"
+  :class="{ selected: selectedGroupId === chat.id }"
+  @click="selectedGroupId = chat.id"
+>
+  <div class="chat-name">{{ chat.name }}</div>
+</div>
   </div>
 </template>
 
@@ -211,6 +212,16 @@
   padding: 16px;
   border-bottom: 1px solid #f0f0f0;
   cursor: pointer;
+}
+
+.chat-item.selected {
+  background-color: #fff4e5;
+  border-left: 4px solid #e99415;
+  font-weight: bold;
+}
+
+.chat-item.selected .chat-name {
+  color: #e99415;
 }
 
 .chat-item:hover {
