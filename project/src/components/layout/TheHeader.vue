@@ -32,7 +32,6 @@
     function handleClickOutside(event: MouseEvent) {
         const target = event.target as Node
 
-        // Ignore click if inside menu, avatar or mobile menu
         if (
             menuRef.value?.contains(target) ||
             avatarRef.value?.contains(target) ||
@@ -41,7 +40,6 @@
             return
         }
 
-        // Otherwise close menus
         menuOpen.value = false
         mobileMenuOpen.value = false
     }
@@ -113,7 +111,7 @@
                 <div v-if="mobileMenuOpen" class="mobile-menu" ref="mobileMenuRef">
                     <router-link to="/search" class="mobile-link" @click="toggleMobileMenu">Personnaliser</router-link>
                     <router-link to="/conversations" class="mobile-link" @click="toggleMobileMenu">Messages</router-link>
-                    <router-link to="/planings" class="mobile-link" @click="toggleMobileMenu">Plannings</router-link>
+                    <router-link to="/plannings" class="mobile-link" @click="toggleMobileMenu">Plannings</router-link>
                     <router-link to="/profile" class="mobile-link" @click="toggleMobileMenu">Mon profil</router-link>
 
                     <div v-if="!isAuthenticated()" class="mobile-auth">

@@ -59,7 +59,7 @@ const router = createRouter({
             path: '/plannings',
             name: 'planings',
             component: PlanningView,
-            meta: { requiresAuth: true }
+            meta: { requiresAuth: true, hideFooter: true }
         },
         {
             path: '/search/results',
@@ -74,10 +74,10 @@ const router = createRouter({
             meta: { requiresAuth: true }
         },
         {
-        path: '/restaurants/:id',
-        name: 'RestaurantDetail',
-        component: RestaurantDetailView,
-        meta: { requiresAuth: true }
+            path: '/restaurants/:id',
+            name: 'RestaurantDetail',
+            component: RestaurantDetailView,
+            meta: { requiresAuth: true }
         },
         {
             path: '/mentions-legales',

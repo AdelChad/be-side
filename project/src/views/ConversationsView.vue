@@ -11,18 +11,3 @@ import Header from '../components/chat/Header.vue'
     </div>
   </div>
 </template>
-
-<style>
-/* 
-.layout {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-}
-*/
-
-.container-message {
-  display: flex;
-  height:  85vh;
-} 
-</style>  
