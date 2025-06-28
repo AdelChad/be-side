@@ -1,14 +1,33 @@
 <script setup lang="ts">
-    import { ref, onMounted } from 'vue'
+    import { ref, onMounted, computed } from 'vue'
     import { useRoute } from 'vue-router'
+    import { useFavoritesStore } from '../../stores/fav';
+    import { useUserStore } from '../../stores/user';
     import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
     import { library } from '@fortawesome/fontawesome-svg-core'
     import {  faHeart, faLocationDot, faStar, faShare, faPhone } from '@fortawesome/free-solid-svg-icons'
     library.add(faHeart,faStar,faLocationDot,faShare, faPhone)
 
+    const activity = ref<Activity>()
     const route = useRoute()
 
-  interface Activity {
+    const favoritesStore = useFavoritesStore()
+    const store = useUserStore()
+
+    const isFavorite = computed(() => {
+  if (!activity.value) return false
+  return store.isFavorite(Number(activity.value.id), 'activity')
+})
+
+function toggleFavorite() {
+  if (!activity.value) return
+  favoritesStore.toggleFavorite({
+    ...activity.value,
+    type: 'activity'
+  })
+}
+
+interface Activity {
   id: string
   name: string
   photo: string
@@ -25,7 +44,6 @@
   }[] 
 }
 
-    const activity = ref<Activity>()
     const token = localStorage.getItem('access_token') 
     const activityId = route.params.id as string
 
@@ -46,19 +64,12 @@
             }
 
             activity.value = await activitiesAPI.json()
-            document.title = `${activity.value?.name} | BeSide`
-            
+            document.title = `${activity.value?.name} | BeSide`            
         } catch (error) {
             console.log('Error fetching activities:', error)
         }
     })
-    
-    const isFavorite = ref(false)
-    
-    function toggleFavorite() {
-        isFavorite.value = !isFavorite.value
-    }
-    
+        
     const currentImageIndex = ref(0)
 
     function prevImage() {

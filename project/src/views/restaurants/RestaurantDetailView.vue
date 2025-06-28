@@ -1,12 +1,31 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useFavoritesStore } from '../../stores/fav';
+import { useUserStore } from '../../stores/user';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import {  faHeart, faLocationDot, faStar, faShare, faPhone } from '@fortawesome/free-solid-svg-icons'
 library.add(faHeart,faStar,faLocationDot,faShare, faPhone)
 
+const restaurant = ref<Restaurant>()
 const route = useRoute()
+
+    const favoritesStore = useFavoritesStore()
+    const store = useUserStore()
+
+    const isFavorite = computed(() => {
+  if (!restaurant.value) return false
+  return store.isFavorite(Number(restaurant.value.id), 'restaurant')
+})
+
+function toggleFavorite() {
+  if (!restaurant.value) return
+  favoritesStore.toggleFavorite({
+    ...restaurant.value,
+    type: 'restaurant'
+  })
+}
 
 interface Restaurant {
   id: string
@@ -25,7 +44,6 @@ interface Restaurant {
   }[]
 }
 
-const restaurant = ref<Restaurant>()
 const token = localStorage.getItem('access_token')
 const restaurantId = route.params.id as string
 
@@ -49,12 +67,6 @@ onMounted(async () => {
     console.error('Error fetching restaurant:', error)
   }
 })
-
-const isFavorite = ref(false)
-
-function toggleFavorite() {
-  isFavorite.value = !isFavorite.value
-}
 
 const currentImageIndex = ref(0)
 
