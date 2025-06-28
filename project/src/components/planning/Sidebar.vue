@@ -9,6 +9,8 @@
   const searchQuery = ref('')
   const errorMessage = ref('')
   const token = localStorage.getItem('access_token')
+  const nameError = ref(false)
+  const dateError = ref(false)
 
   let userId = null
 
@@ -50,10 +52,26 @@
   async function createPlanning() {
     errorMessage.value = ''
 
-    if (newPlanningName.value.trim() === '' || planningDate.value === '') {
-      errorMessage.value = 'Veuillez saisir un nom et une date'
-      return
+  const isNameEmpty = newPlanningName.value.trim() === ''
+  const isDateEmpty = planningDate.value === ''
+
+  nameError.value = isNameEmpty
+  dateError.value = isDateEmpty
+
+  if (isNameEmpty || isDateEmpty) {
+    if (isNameEmpty && isDateEmpty) {
+      errorMessage.value = 'Veuillez saisir un nom et une date.'
+    } else if (isNameEmpty) {
+      errorMessage.value = 'Veuillez saisir un nom pour le planning.'
+    } else {
+      errorMessage.value = 'Veuillez sélectionner une date.'
     }
+    return
+  }
+
+    errorMessage.value = ''
+    nameError.value = false
+    dateError.value = false
 
     try {
       const response = await fetch('http://localhost:3000/plannings/create', {
@@ -93,11 +111,11 @@
     }
   }
 
-  function clearError() {
-    if (errorMessage.value) {
-      errorMessage.value = ''
-    }
-  }
+const clearError = () => {
+  errorMessage.value = ''
+  nameError.value = false
+  dateError.value = false
+}
 
   const filteredPlannings = computed(() =>
     plannings.value.filter(planning =>
@@ -111,22 +129,23 @@
   <div class="sidebar">
     <div class="sidebar-header">
       <div class="create-group-form">
-        <input
-          type="text"
-          v-model="newPlanningName"
-          @keyup.enter="createPlanning"
-          @input="clearError"
-          placeholder="Nom du nouveau planning"
-          class="search-input"
-          :class="{ 'error': errorMessage }"
-        />
-        <input
-          type="date"
-          v-model="planningDate"
-          @change="clearError"
-          class="search-input"
-          :class="{ 'error': errorMessage }"
-        />
+            <input
+      type="text"
+      v-model="newPlanningName"
+      @keyup.enter="createPlanning"
+      @input="clearError"
+      placeholder="Nom du nouveau planning"
+      class="search-input"
+      :class="{ error: nameError }"
+    />
+
+    <input
+      type="date"
+      v-model="planningDate"
+      @change="clearError"
+      class="search-input"
+      :class="{ error: dateError }"
+    />
         <button @click="createPlanning" class="create-btn">
           Créer
         </button>

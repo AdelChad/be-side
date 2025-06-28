@@ -32,7 +32,6 @@ const checkPasswords = () => {
   } else if (password.value !== checkPassword.value) {
     errors.value.password = 'Les mots de passe ne correspondent pas.';
   } else if (!validatePassword()) {
-    // handled inside validatePassword
   } else {
     delete errors.value.password;
   }
