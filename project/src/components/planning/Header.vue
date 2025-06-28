@@ -104,7 +104,7 @@ async function sharePlanning() {
   <div class="header">
     <div class="group-info">
       <h3 class="name" v-if="props.planning?.activitiesDay?.length">
-        {{ formatDate(props.planning.activitiesDay[0].date) }}
+        {{ (props.planning.name) }}
       </h3>
     </div>
 
