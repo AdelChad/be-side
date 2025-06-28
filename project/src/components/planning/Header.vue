@@ -142,7 +142,6 @@ async function sharePlanning() {
 </template>
 
 <style scoped>
-/* Styles inchangés (copie de ton fichier précédent) */
 .header {
   padding: 16px;
   background-color: white;

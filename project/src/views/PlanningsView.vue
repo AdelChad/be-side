@@ -12,14 +12,6 @@ import PlanningWindow from '../components/planning/PlanningWindow.vue';
 </template>
 
 <style>
-/* 
-.layout {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-}
-*/
-
 .container-message {
   display: flex;
   height:  85vh;

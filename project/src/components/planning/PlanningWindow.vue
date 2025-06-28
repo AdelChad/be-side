@@ -29,7 +29,6 @@
     }
   }
 
-  // Fonction pour récupérer tous les plannings
   async function fetchPlannings() {
     try {
       const response = await fetch('http://localhost:3000/plannings', {
@@ -38,7 +37,6 @@
       if (!response.ok) throw new Error('Erreur lors du chargement des plannings')
       planningsList.value = await response.json()
 
-      // Si aucun planning n'est sélectionné, prendre le premier
       if (!selectedPlanningId.value && planningsList.value.length > 0) {
         selectedPlanningId.value = planningsList.value[0].id
       }

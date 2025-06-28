@@ -196,7 +196,7 @@ function removeFavorite(id: number, type: 'activity' | 'restaurant') {
           <!-- Restaurants Card -->
           <div class="profile-card">
             <div class="card-header">
-              <h3>Mes restaurants préférés</h3>
+              <h3>Mes restaurants favoris</h3>
             </div>
             <div class="card-content">
               <div class="restaurants-grid" v-if="favoriteRestaurants.length">
@@ -399,7 +399,7 @@ function removeFavorite(id: number, type: 'activity' | 'restaurant') {
 }
 
 .profile-content {
-  padding: var(--space-6) 0;
+  padding: var(--space-3);
 }
 
 .profile-grid {

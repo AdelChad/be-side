@@ -70,26 +70,6 @@
         if (!activity.value?.photos?.length) return;
         currentImageIndex.value = (currentImageIndex.value + 1) % activity.value.photos.length
     }
-
-
-
-
-    //const currentImageIndex = ref(0)
-    // function prevImage() {
-    //     if (currentImageIndex.value > 0) {
-    //         currentImageIndex.value--
-    //     } else {
-    //         currentImageIndex.value = activity.value?.photo.length - 1
-    //     }
-    // }
-
-    // function nextImage() {
-    //     if (currentImageIndex.value < activity.value?.photo.length - 1) {
-    //         currentImageIndex.value++
-    //     } else {
-    //         currentImageIndex.value = 0
-    //     }
-    // }
 </script>
 
 <template>

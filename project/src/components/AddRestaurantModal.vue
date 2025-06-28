@@ -43,6 +43,7 @@
             restaurants.value = restaurantsData.map(r => ({
                 id: r.id,
                 name: r.name,
+                city: r.city,
             }))
 
         } catch (error) {
@@ -107,7 +108,7 @@
   <div class="modal-overlay" @click.self="$emit('close')">
     <div class="modal-content" @click.stop>
       <div class="modal-header">
-        <h2>➕ Ajouter un restaurant au planning</h2>
+        <h2>Ajouter un restaurant au planning</h2>
         <button @click="$emit('close')" class="close-btn">×</button>
       </div>
 
@@ -130,7 +131,7 @@
                 :key="restaurant.id"
                 :value="restaurant"
               >
-                {{ restaurant.name }}
+                {{ restaurant.name }} - {{ restaurant.city }}
               </option>
             </select>
           </div>
@@ -153,6 +154,7 @@
 
 <style scoped>
 .modal-overlay {
+  color:black;
   position: fixed;
   inset: 0;
   background-color: rgba(0, 0, 0, 0.6);
@@ -195,6 +197,11 @@
 
 .selection-column {
   width: 100%;
+  margin: 1rem 0 1rem 0;
+}
+
+.modal-overlay h3 {
+  margin-bottom: 0.5rem;
 }
 
 .full-width {
