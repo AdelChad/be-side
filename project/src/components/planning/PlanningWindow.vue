@@ -192,12 +192,9 @@
   <div class="chat-window">
     <Header :planning="planning" />
     <div class="chat-content planning-panel">
-      <h2>Mon planning</h2>
 
       <div v-if="planning?.activitiesDay?.length">
         <div v-for="day in planning.activitiesDay" :key="day.id" class="day-card">
-          <h3>{{ formatDate(day.date) }}</h3>
-          
           <ul class="planning-list">
             <li
               v-for="step in [
@@ -303,8 +300,6 @@
     background: white;
     padding: 1rem;
     margin-bottom: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
   .day-card h3 {
