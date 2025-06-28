@@ -159,6 +159,7 @@ const clearError = () => {
       v-for="planning in filteredPlannings"
       :key="planning.id"
       class="chat-item"
+      :class="{ selected: planning.id === selectedPlanningId }"
       @click="selectedPlanningId = planning.id"
     >
       <div class="chat-name">{{ planning.name }}</div>
@@ -202,7 +203,7 @@ const clearError = () => {
 
 .search-input:focus {
   outline: none;
-  border-color: #007bff;
+  border-color: #e99415;
 }
 
 .search-input.error {
@@ -252,6 +253,16 @@ const clearError = () => {
 
 .chat-item:hover {
   background-color: #f9f9f9;
+}
+
+.chat-item.selected {
+  background-color: #fff4e5;
+  border-left: 4px solid #e99415;
+  font-weight: bold;
+}
+
+.chat-item.selected .chat-name {
+  color: #e99415;
 }
 
 .chat-name {
