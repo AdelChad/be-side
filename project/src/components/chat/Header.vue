@@ -22,6 +22,7 @@
   const showAddRestaurantModal = ref(false)
   const showPlanning = ref(false)
   const selectedTime = ref(null)
+  const selectedDayId = ref(null)
   let userId = null
 
   if (token) {
@@ -144,6 +145,37 @@
     }
   }
 
+  async function deleteActivity(activityDayId, activityId, time) {
+    try {
+      const response = await fetch(`http://localhost:3000/plannings/delete_activity`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          activityDayId,
+          activityId,
+          time
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || `Erreur ${response.status}`)
+      }
+
+      const dayToUpdate = planning.value.find(day => day.id === activityDayId)
+      if (dayToUpdate) {
+        dayToUpdate[time] = null
+      }
+      
+      refreshPlanning()
+    } catch (error) {
+      console.error("Erreur lors de la suppression de l'activité :", error)
+    }
+  }
+
   function clearMessages() {
     if (errorMessage.value || successMessage.value) {
       errorMessage.value = ''
@@ -151,11 +183,62 @@
     }
   }
 
+  function openAddActivityModal(dayId, timeSlot) {
+    selectedDayId.value = dayId
+    selectedTime.value = timeSlot
+    selectedPlanningId.value = dayId
+    showAddActivityModal.value = true
+  }
+
+  function closeActivityModal() {
+    showAddActivityModal.value = false
+    selectedDayId.value = null
+    selectedTime.value = null
+  }
+
+  function refreshPlanning() {
+    if (selectedGroupId.value) {
+      socket.emit('getPlanning', { channelId: selectedGroupId.value })
+    }
+  }
+
+  function onActivityAdded() {
+    refreshPlanning()
+    closeActivityModal()
+  }
+
+  function onActivityAddedWithData(data) {
+    const dayToUpdate = planning.value.find(day => day.id === data.planningId)
+    if (dayToUpdate && data.activity) {
+      dayToUpdate[data.time] = data.activity
+    }
+    
+    refreshPlanning()
+    closeActivityModal()
+  }
+
+  function openAddRestaurantModal(dayId, timeSlot) {
+    selectedDayId.value = dayId
+    selectedTime.value = timeSlot
+    selectedPlanningId.value = dayId
+    showAddRestaurantModal.value = true
+  }
+
+  function closeRestaurantModal() {
+    showAddRestaurantModal.value = false
+    selectedDayId.value = null
+    selectedTime.value = null
+  }
+
+  function onRestaurantAdded() {
+    refreshPlanning()
+    closeRestaurantModal()
+  }
+
   function toggleOpenPlanning() {
     showPlanning.value = !showPlanning.value
   }
 </script>
-
 <template>
   <div class="header">
     <img src="https://media.gqmagazine.fr/photos/5ef0aedfcaa5a09c5304aed1/4:3/w_2119,h_1589,c_limit/friends.jpg"
@@ -188,7 +271,7 @@
           <div class="planning-panel">
             <h2>Planning du groupe</h2>
            <div v-if="planning.length">
-        <div v-for="day in planning" class="day-card">
+        <div v-for="day in planning" class="day-card" :key="day.id">
           <h3>{{ formatDate(day.date) }}</h3>
 
              <ul class="planning-list">
@@ -202,6 +285,7 @@
                       <img :src="day.breakfastRestaurant.photo" alt="Petit déjeuner" class="planning-photo" />
                       <div class="overlay-text">{{ day.breakfastRestaurant.name }}<br><span class="city">{{ day.breakfastRestaurant.city }}</span></div>
                     </router-link>
+                    <button class="close-btn" @click="deleteActivity(day.id, day.breakfastRestaurant.id, 'breakfastRestaurant')">Supprimer du planning</button>
                   </div>
                 </div>
               </li>
@@ -210,18 +294,12 @@
               <div class="step-content">
                 <h4>Petit déjeuner</h4>
                 <div class="image-wrapper">
-                  <div @click="showAddRestaurantModal = true; selectedTime = 'breakfastRestaurant'; selectedPlanningId = day.id" style="cursor: pointer" class="planning-placeholder-button">
+                  <div @click="openAddRestaurantModal(day.id, 'breakfastRestaurant')" style="cursor: pointer" class="planning-placeholder-button">
                     <font-awesome-icon :icon="['fas', 'plus']" class="fa-plus-icon" />
-                    <AddRestaurantModal
-                      v-if="showAddRestaurantModal && day.id"
-                      :selected-time="selectedTime"
-                      @close="showAddRestaurantModal = false"
-                    />
                   </div>
                 </div>
               </div>
             </li>
-
 
               <!-- Activité du matin -->
               <li class="planning-step" v-if="day.morningActivity">
@@ -233,6 +311,7 @@
                       <img :src="day.morningActivity.photo" alt="Activité du matin" class="planning-photo" />
                       <div class="overlay-text">{{ day.morningActivity.name }} <br> <span class="city">{{ day.morningActivity.city }}</span></div>
                     </router-link>
+                    <button class="close-btn" @click="deleteActivity(day.id, day.morningActivity.id, 'morningActivity')">Supprimer du planning</button>
                   </div>
                 </div>
               </li>
@@ -241,13 +320,8 @@
               <div class="step-content">
                 <h4>Activité du matin</h4>
                 <div class="image-wrapper">
-                  <div @click="showAddActivityModal = true; selectedTime = 'morningActivity'; selectedPlanningId = day.id" style="cursor: pointer" class="planning-placeholder-button">
+                  <div @click="openAddActivityModal(day.id, 'morningActivity')" style="cursor: pointer" class="planning-placeholder-button">
                     <font-awesome-icon :icon="['fas', 'plus']" class="fa-plus-icon" />
-                     <AddActivityModal
-                        v-if="showAddActivityModal && day.id"
-                        :selected-time="selectedTime"
-                        @close="showAddActivityModal = false"
-                      />
                   </div>
                 </div>
               </div>
@@ -263,6 +337,7 @@
                       <img :src="day.noondayActivity.photo" alt="Activité de midi" class="planning-photo" />
                       <div class="overlay-text">{{ day.noondayActivity.name }}<br> <span class="city">{{ day.noondayActivity.city }}</span></div>
                     </router-link>
+                    <button class="close-btn" @click="deleteActivity(day.id, day.noondayActivity.id, 'noondayActivity')">Supprimer du planning</button>
                   </div>
                 </div>
               </li>
@@ -271,13 +346,8 @@
               <div class="step-content">
                 <h4>Activité du midi</h4>
                 <div class="image-wrapper">
-                  <div @click="showAddActivityModal = true; selectedTime = 'noondayActivity'; selectedPlanningId = day.id" style="cursor: pointer" class="planning-placeholder-button">
+                  <div @click="openAddActivityModal(day.id, 'noondayActivity')" style="cursor: pointer" class="planning-placeholder-button">
                     <font-awesome-icon :icon="['fas', 'plus']" class="fa-plus-icon" />
-                     <AddActivityModal
-                        v-if="showAddActivityModal && day.id"
-                        :selected-time="selectedTime"
-                        @close="showAddActivityModal = false"
-                      />
                   </div>
                 </div>
               </div>
@@ -293,6 +363,7 @@
                       <img :src="day.lunchRestaurant.photo" alt="Déjeuner" class="planning-photo" />
                       <div class="overlay-text">{{ day.lunchRestaurant.name }}<br> <span class="city">{{ day.lunchRestaurant.city }}</span></div>
                     </router-link>
+                    <button class="close-btn" @click="deleteActivity(day.id, day.lunchRestaurant.id, 'lunchRestaurant')">Supprimer du planning</button>
                   </div>
                 </div>
               </li>
@@ -301,13 +372,8 @@
               <div class="step-content">
                 <h4>Déjeuner</h4>
                 <div class="image-wrapper">
-                  <div @click="showAddRestaurantModal = true; selectedTime = 'lunchRestaurant'; selectedPlanningId = day.id" style="cursor: pointer" class="planning-placeholder-button">
+                  <div @click="openAddRestaurantModal(day.id, 'lunchRestaurant')" style="cursor: pointer" class="planning-placeholder-button">
                     <font-awesome-icon :icon="['fas', 'plus']" class="fa-plus-icon" />
-                    <AddRestaurantModal
-                      v-if="showAddRestaurantModal && day.id"
-                      :selected-time="selectedTime"
-                      @close="showAddRestaurantModal = false"
-                    />
                   </div>
                 </div>
               </div>
@@ -323,6 +389,7 @@
                       <img :src="day.afternoonActivity.photo" alt="Après-midi" class="planning-photo" />
                       <div class="overlay-text">{{ day.afternoonActivity.name }}<br> <span class="city">{{ day.afternoonActivity.city }}</span></div>
                     </router-link>
+                    <button class="close-btn" @click="deleteActivity(day.id, day.afternoonActivity.id, 'afternoonActivity')">Supprimer du planning</button>
                   </div>
                 </div>
               </li>
@@ -331,13 +398,8 @@
               <div class="step-content">
                 <h4>Après-midi</h4>
                 <div class="image-wrapper">
-                  <div @click="showAddActivityModal = true; selectedTime = 'afternoonActivity'; selectedPlanningId = day.id" style="cursor: pointer" class="planning-placeholder-button">
+                  <div @click="openAddActivityModal(day.id, 'afternoonActivity')" style="cursor: pointer" class="planning-placeholder-button">
                     <font-awesome-icon :icon="['fas', 'plus']" class="fa-plus-icon" />
-                     <AddActivityModal
-                        v-if="showAddActivityModal && day.id"
-                        :selected-time="selectedTime"
-                        @close="showAddActivityModal = false"
-                      />
                   </div>
                 </div>
               </div>
@@ -353,6 +415,7 @@
                       <img :src="day.eveningActivity.photo" alt="Soirée" class="planning-photo" />
                       <div class="overlay-text">{{ day.eveningActivity.name }}<br> <span class="city">{{ day.eveningActivity.city }}</span></div>
                     </router-link>
+                    <button class="close-btn" @click="deleteActivity(day.id, day.eveningActivity.id, 'eveningActivity')">Supprimer du planning</button>
                   </div>
                 </div>
               </li>
@@ -361,13 +424,8 @@
               <div class="step-content">
                 <h4>Soirée</h4>
                 <div class="image-wrapper">
-                  <div @click="showAddActivityModal = true; selectedTime = 'eveningActivity'; selectedPlanningId = day.id" style="cursor: pointer" class="planning-placeholder-button">
+                  <div @click="openAddActivityModal(day.id, 'eveningActivity')" style="cursor: pointer" class="planning-placeholder-button">
                     <font-awesome-icon :icon="['fas', 'plus']" class="fa-plus-icon" />
-                     <AddActivityModal
-                        v-if="showAddActivityModal && day.id"
-                        :selected-time="selectedTime"
-                        @close="showAddActivityModal = false"
-                      />
                   </div>
                 </div>
               </div>
@@ -383,6 +441,7 @@
                       <img :src="day.dinnerRestaurant.photo" alt="Dîner" class="planning-photo" />
                       <div class="overlay-text">{{ day.dinnerRestaurant.name }}<br> <span class="city">{{ day.dinnerRestaurant.city }}</span></div>
                     </router-link>
+                    <button class="close-btn" @click="deleteActivity(day.id, day.dinnerRestaurant.id, 'dinnerRestaurant')">Supprimer du planning</button>
                   </div>
                 </div>
               </li>
@@ -391,13 +450,8 @@
               <div class="step-content">
                 <h4>Dîner</h4>
                 <div class="image-wrapper">
-                  <div @click="showAddRestaurantModal = true; selectedTime = 'dinnerRestaurant'; selectedPlanningId = day.id" style="cursor: pointer" class="planning-placeholder-button">
+                  <div @click="openAddRestaurantModal(day.id, 'dinnerRestaurant')" style="cursor: pointer" class="planning-placeholder-button">
                     <font-awesome-icon :icon="['fas', 'plus']" class="fa-plus-icon" />
-                    <AddRestaurantModal
-                      v-if="showAddRestaurantModal && day.id"
-                      :selected-time="selectedTime"
-                      @close="showAddRestaurantModal = false"
-                    />
                   </div>
                 </div>
               </div>
@@ -411,9 +465,9 @@
                   <div class="image-wrapper">
                     <router-link :to="`/activities/${day.nightActivity.id}`" class="planning-link">
                       <img :src="day.nightActivity.photo" alt="Nuit" class="planning-photo" />
-                      <div class="overlay-text">{{ day.nightActivity.name }}<br> <span class="city">{{ day.nightActivity
-                      .city }}</span></div>
+                      <div class="overlay-text">{{ day.nightActivity.name }}<br> <span class="city">{{ day.nightActivity.city }}</span></div>
                     </router-link>
+                    <button class="close-btn" @click="deleteActivity(day.id, day.nightActivity.id, 'nightActivity')">Supprimer du planning</button>
                   </div>
                 </div>
               </li>
@@ -422,20 +476,13 @@
               <div class="step-content">
                 <h4>Nuit</h4>
                 <div class="image-wrapper">
-                  <div @click="showAddActivityModal = true; selectedTime = 'nightActivity'; selectedPlanningId = day.id" style="cursor: pointer" class="planning-placeholder-button">
+                  <div @click="openAddActivityModal(day.id, 'nightActivity')" style="cursor: pointer" class="planning-placeholder-button">
                     <font-awesome-icon :icon="['fas', 'plus']" class="fa-plus-icon" />
-                     <AddActivityModal
-                        v-if="showAddActivityModal && day.id"
-                        :selected-time="selectedTime"
-                        @close="showAddActivityModal = false"
-                      />
                   </div>
                 </div>
               </div>
             </li>
             </ul>
-
-
         </div>
       </div>
       <div v-else>
@@ -444,6 +491,20 @@
             <button class="close-btn" @click="toggleOpenPlanning">Fermer</button>
           </div>
         </div>
+      <AddActivityModal
+        v-if="showAddActivityModal && selectedDayId"
+        :selected-time="selectedTime"
+        @close="closeActivityModal"
+        @updated="onActivityAdded"
+        @activity-added="onActivityAddedWithData"
+      />
+      <AddRestaurantModal
+        v-if="showAddRestaurantModal && selectedDayId"
+        :selected-time="selectedTime"
+        @close="closeRestaurantModal"
+        @updated="onRestaurantAdded"
+        @restaurant-added="onActivityAddedWithData"
+      />
       <div class="messages-inline">
         <div v-if="errorMessage" class="error-message">
           {{ errorMessage }}

@@ -8,6 +8,7 @@ import { UserService } from 'src/user/user.service';
 import { PlanningCreateDto } from './dto/create-planning.dto';
 import { PlanningUpdateDto } from './dto/modify-planning.dto';
 import { PlanningShareDto } from './dto/share-planning.dto';
+import { DeleteActivityDto } from './dto/delete-activity.dto';
 
 @Controller('plannings')
 export class PlanningController {
@@ -44,6 +45,16 @@ export class PlanningController {
         const user = await this.userService.findOne(userRequest.email)
 
         return await this.planningService.modifyActivityDay(activitiesCreateDto, user)
+    }
+
+    @UseGuards(AuthGuard)
+    @Roles(['user'])
+    @Post('delete_activity')
+    async deleteActivity(@Body() dto: DeleteActivityDto, @Req() request): Promise<any> {
+        const userRequest: UserRequest = request.user
+        const user = await this.userService.findOne(userRequest.email)
+
+        return await this.planningService.removeActivityFromDay(dto, user);
     }
 
 

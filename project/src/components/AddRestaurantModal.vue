@@ -2,7 +2,7 @@
     import { ref, computed, onMounted } from 'vue'
     import { selectedPlanningId } from '../stores/planning'
 
-    const emits = defineEmits(['close', 'add'])
+    const emits = defineEmits(['close', 'updated', 'add', 'restaurant-added'])
 
     const token = localStorage.getItem('access_token')
     const restaurants = ref([])
@@ -88,6 +88,14 @@
             }
 
             const updatedPlanning = await response.json();
+            
+            emits('restaurant-added', {
+                restaurant: selectedRestaurant.value,
+                time: props.selectedTime,
+                planningId: selectedPlanningId.value
+            });
+            
+            emits('updated');
             emits('close');
         } catch (err) {
             console.error("Erreur lors de la mise à jour du planning :", err);
@@ -114,7 +122,7 @@
 
         <div class="selection-area">
           <div class="selection-column full-width">
-            <h3>Choisissez un retaurant</h3>
+            <h3>Choisissez un restaurant</h3>
             <select v-model="selectedRestaurant" :disabled="filteredRestaurants.length === 0">
               <option disabled :value="null">-- Sélectionnez --</option>
               <option
