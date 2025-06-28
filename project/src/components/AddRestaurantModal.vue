@@ -224,7 +224,7 @@
 }
 
 .btn-primary {
-  background-color: #3b82f6;
+  background-color: black;
   color: white;
 }
 
