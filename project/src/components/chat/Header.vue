@@ -6,10 +6,10 @@
   import { selectedPlanningId } from '../../stores/planning'
   import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
   import { library } from '@fortawesome/fontawesome-svg-core'
-  import { faCalendarDays, faPlus } from '@fortawesome/free-solid-svg-icons'
+  import { faCalendarDays, faPlus, faTimesCircle } from '@fortawesome/free-solid-svg-icons'
   import AddActivityModal from '../AddActivityModal.vue'
   import AddRestaurantModal from '../AddRestaurantModal.vue'
-  library.add(faCalendarDays, faPlus)
+  library.add(faCalendarDays, faPlus, faTimesCircle)
 
   const token = localStorage.getItem('access_token')
   const planning = ref([])
@@ -274,215 +274,53 @@
         <div v-for="day in planning" class="day-card" :key="day.id">
           <h3>{{ formatDate(day.date) }}</h3>
 
-             <ul class="planning-list">
-              <!-- Petit déjeuner -->
-              <li class="planning-step" v-if="day.breakfastRestaurant">
-                <div class="step-marker"></div>
-                <div class="step-content">
-                  <h4>Petit déjeuner</h4>
-                  <div class="image-wrapper">
-                    <router-link :to="`/restaurants/${day.breakfastRestaurant.id}`" class="planning-link">
-                      <img :src="day.breakfastRestaurant.photo" alt="Petit déjeuner" class="planning-photo" />
-                      <div class="overlay-text">{{ day.breakfastRestaurant.name }}<br><span class="city">{{ day.breakfastRestaurant.city }}</span></div>
-                    </router-link>
-                    <button class="close-btn" @click="deleteActivity(day.id, day.breakfastRestaurant.id, 'breakfastRestaurant')">Supprimer du planning</button>
-                  </div>
-                </div>
-              </li>
-            <li v-else class="planning-step">
+          <ul class="planning-list">
+            <!-- Étapes de la journée -->
+            <li class="planning-step" v-for="step in [
+              { key: 'breakfastRestaurant', label: 'Petit déjeuner', type: 'restaurant' },
+              { key: 'morningActivity', label: 'Activité du matin', type: 'activity' },
+              { key: 'noondayActivity', label: 'Activité de midi', type: 'activity' },
+              { key: 'lunchRestaurant', label: 'Déjeuner', type: 'restaurant' },
+              { key: 'afternoonActivity', label: 'Après-midi', type: 'activity' },
+              { key: 'eveningActivity', label: 'Soirée', type: 'activity' },
+              { key: 'dinnerRestaurant', label: 'Dîner', type: 'restaurant' },
+              { key: 'nightActivity', label: 'Nuit', type: 'activity' }
+            ]" :key="step.key">
               <div class="step-marker"></div>
               <div class="step-content">
-                <h4>Petit déjeuner</h4>
+                <h4>{{ step.label }}</h4>
                 <div class="image-wrapper">
-                  <div @click="openAddRestaurantModal(day.id, 'breakfastRestaurant')" style="cursor: pointer" class="planning-placeholder-button">
-                    <font-awesome-icon :icon="['fas', 'plus']" class="fa-plus-icon" />
-                  </div>
+                  <template v-if="day[step.key]">
+                    <font-awesome-icon
+                      :icon="['fas', 'times-circle']"
+                      class="delete-icon"
+                      @click="deleteActivity(day.id, day[step.key].id, step.key)"
+                    />
+                    <router-link
+                      :to="`/${step.type === 'restaurant' ? 'restaurants' : 'activities'}/${day[step.key].id}`"
+                      class="planning-link"
+                    >
+                      <img :src="day[step.key].photo" :alt="step.label" class="planning-photo" />
+                      <div class="overlay-text">
+                        {{ day[step.key].name }}<br />
+                        <span class="city">{{ day[step.key].city }}</span>
+                      </div>
+                    </router-link>
+                  </template>
+                  <template v-else>
+                    <div
+                      @click="step.type === 'restaurant' ? openAddRestaurantModal(day.id, step.key) : openAddActivityModal(day.id, step.key)"
+                      style="cursor: pointer"
+                      class="planning-placeholder-button"
+                    >
+                      <font-awesome-icon :icon="['fas', 'plus']" class="fa-plus-icon" />
+                    </div>
+                  </template>
                 </div>
               </div>
             </li>
+          </ul>
 
-              <!-- Activité du matin -->
-              <li class="planning-step" v-if="day.morningActivity">
-                <div class="step-marker"></div>
-                <div class="step-content">
-                  <h4>Activité du matin</h4>
-                  <div class="image-wrapper">
-                    <router-link :to="`/activities/${day.morningActivity.id}`" class="planning-link">
-                      <img :src="day.morningActivity.photo" alt="Activité du matin" class="planning-photo" />
-                      <div class="overlay-text">{{ day.morningActivity.name }} <br> <span class="city">{{ day.morningActivity.city }}</span></div>
-                    </router-link>
-                    <button class="close-btn" @click="deleteActivity(day.id, day.morningActivity.id, 'morningActivity')">Supprimer du planning</button>
-                  </div>
-                </div>
-              </li>
-               <li v-else class="planning-step">
-              <div class="step-marker"></div>
-              <div class="step-content">
-                <h4>Activité du matin</h4>
-                <div class="image-wrapper">
-                  <div @click="openAddActivityModal(day.id, 'morningActivity')" style="cursor: pointer" class="planning-placeholder-button">
-                    <font-awesome-icon :icon="['fas', 'plus']" class="fa-plus-icon" />
-                  </div>
-                </div>
-              </div>
-            </li>
-
-              <!-- Activité de midi -->
-              <li class="planning-step" v-if="day.noondayActivity">
-                <div class="step-marker"></div>
-                <div class="step-content">
-                  <h4>Activité de midi</h4>
-                  <div class="image-wrapper">
-                    <router-link :to="`/activities/${day.noondayActivity.id}`" class="planning-link">
-                      <img :src="day.noondayActivity.photo" alt="Activité de midi" class="planning-photo" />
-                      <div class="overlay-text">{{ day.noondayActivity.name }}<br> <span class="city">{{ day.noondayActivity.city }}</span></div>
-                    </router-link>
-                    <button class="close-btn" @click="deleteActivity(day.id, day.noondayActivity.id, 'noondayActivity')">Supprimer du planning</button>
-                  </div>
-                </div>
-              </li>
-                 <li v-else class="planning-step">
-              <div class="step-marker"></div>
-              <div class="step-content">
-                <h4>Activité du midi</h4>
-                <div class="image-wrapper">
-                  <div @click="openAddActivityModal(day.id, 'noondayActivity')" style="cursor: pointer" class="planning-placeholder-button">
-                    <font-awesome-icon :icon="['fas', 'plus']" class="fa-plus-icon" />
-                  </div>
-                </div>
-              </div>
-            </li>
-
-              <!-- Déjeuner -->
-              <li class="planning-step" v-if="day.lunchRestaurant">
-                <div class="step-marker"></div>
-                <div class="step-content">
-                  <h4>Déjeuner</h4>
-                  <div class="image-wrapper">
-                    <router-link :to="`/restaurants/${day.lunchRestaurant.id}`" class="planning-link">
-                      <img :src="day.lunchRestaurant.photo" alt="Déjeuner" class="planning-photo" />
-                      <div class="overlay-text">{{ day.lunchRestaurant.name }}<br> <span class="city">{{ day.lunchRestaurant.city }}</span></div>
-                    </router-link>
-                    <button class="close-btn" @click="deleteActivity(day.id, day.lunchRestaurant.id, 'lunchRestaurant')">Supprimer du planning</button>
-                  </div>
-                </div>
-              </li>
-                 <li v-else class="planning-step">
-              <div class="step-marker"></div>
-              <div class="step-content">
-                <h4>Déjeuner</h4>
-                <div class="image-wrapper">
-                  <div @click="openAddRestaurantModal(day.id, 'lunchRestaurant')" style="cursor: pointer" class="planning-placeholder-button">
-                    <font-awesome-icon :icon="['fas', 'plus']" class="fa-plus-icon" />
-                  </div>
-                </div>
-              </div>
-            </li>
-
-              <!-- Après-midi -->
-              <li class="planning-step" v-if="day.afternoonActivity">
-                <div class="step-marker"></div>
-                <div class="step-content">
-                  <h4>Après-midi</h4>
-                  <div class="image-wrapper">
-                    <router-link :to="`/activities/${day.afternoonActivity.id}`" class="planning-link">
-                      <img :src="day.afternoonActivity.photo" alt="Après-midi" class="planning-photo" />
-                      <div class="overlay-text">{{ day.afternoonActivity.name }}<br> <span class="city">{{ day.afternoonActivity.city }}</span></div>
-                    </router-link>
-                    <button class="close-btn" @click="deleteActivity(day.id, day.afternoonActivity.id, 'afternoonActivity')">Supprimer du planning</button>
-                  </div>
-                </div>
-              </li>
-                 <li v-else class="planning-step">
-              <div class="step-marker"></div>
-              <div class="step-content">
-                <h4>Après-midi</h4>
-                <div class="image-wrapper">
-                  <div @click="openAddActivityModal(day.id, 'afternoonActivity')" style="cursor: pointer" class="planning-placeholder-button">
-                    <font-awesome-icon :icon="['fas', 'plus']" class="fa-plus-icon" />
-                  </div>
-                </div>
-              </div>
-            </li>
-
-              <!-- Soirée -->
-              <li class="planning-step" v-if="day.eveningActivity">
-                <div class="step-marker"></div>
-                <div class="step-content">
-                  <h4>Soirée</h4>
-                  <div class="image-wrapper">
-                    <router-link :to="`/activities/${day.eveningActivity.id}`" class="planning-link">
-                      <img :src="day.eveningActivity.photo" alt="Soirée" class="planning-photo" />
-                      <div class="overlay-text">{{ day.eveningActivity.name }}<br> <span class="city">{{ day.eveningActivity.city }}</span></div>
-                    </router-link>
-                    <button class="close-btn" @click="deleteActivity(day.id, day.eveningActivity.id, 'eveningActivity')">Supprimer du planning</button>
-                  </div>
-                </div>
-              </li>
-                 <li v-else class="planning-step">
-              <div class="step-marker"></div>
-              <div class="step-content">
-                <h4>Soirée</h4>
-                <div class="image-wrapper">
-                  <div @click="openAddActivityModal(day.id, 'eveningActivity')" style="cursor: pointer" class="planning-placeholder-button">
-                    <font-awesome-icon :icon="['fas', 'plus']" class="fa-plus-icon" />
-                  </div>
-                </div>
-              </div>
-            </li>
-
-              <!-- Dîner -->
-              <li class="planning-step" v-if="day.dinnerRestaurant">
-                <div class="step-marker"></div>
-                <div class="step-content">
-                  <h4>Dîner</h4>
-                  <div class="image-wrapper">
-                    <router-link :to="`/restaurants/${day.dinnerRestaurant.id}`" class="planning-link">
-                      <img :src="day.dinnerRestaurant.photo" alt="Dîner" class="planning-photo" />
-                      <div class="overlay-text">{{ day.dinnerRestaurant.name }}<br> <span class="city">{{ day.dinnerRestaurant.city }}</span></div>
-                    </router-link>
-                    <button class="close-btn" @click="deleteActivity(day.id, day.dinnerRestaurant.id, 'dinnerRestaurant')">Supprimer du planning</button>
-                  </div>
-                </div>
-              </li>
-                <li v-else class="planning-step">
-              <div class="step-marker"></div>
-              <div class="step-content">
-                <h4>Dîner</h4>
-                <div class="image-wrapper">
-                  <div @click="openAddRestaurantModal(day.id, 'dinnerRestaurant')" style="cursor: pointer" class="planning-placeholder-button">
-                    <font-awesome-icon :icon="['fas', 'plus']" class="fa-plus-icon" />
-                  </div>
-                </div>
-              </div>
-            </li>
-
-              <!-- Nuit -->
-              <li class="planning-step" v-if="day.nightActivity">
-                <div class="step-marker"></div>
-                <div class="step-content">
-                  <h4>Nuit</h4>
-                  <div class="image-wrapper">
-                    <router-link :to="`/activities/${day.nightActivity.id}`" class="planning-link">
-                      <img :src="day.nightActivity.photo" alt="Nuit" class="planning-photo" />
-                      <div class="overlay-text">{{ day.nightActivity.name }}<br> <span class="city">{{ day.nightActivity.city }}</span></div>
-                    </router-link>
-                    <button class="close-btn" @click="deleteActivity(day.id, day.nightActivity.id, 'nightActivity')">Supprimer du planning</button>
-                  </div>
-                </div>
-              </li>
-                <li v-else class="planning-step">
-              <div class="step-marker"></div>
-              <div class="step-content">
-                <h4>Nuit</h4>
-                <div class="image-wrapper">
-                  <div @click="openAddActivityModal(day.id, 'nightActivity')" style="cursor: pointer" class="planning-placeholder-button">
-                    <font-awesome-icon :icon="['fas', 'plus']" class="fa-plus-icon" />
-                  </div>
-                </div>
-              </div>
-            </li>
-            </ul>
         </div>
       </div>
       <div v-else>
@@ -754,6 +592,25 @@
   width: 100%;
   margin-bottom: 12px;
 }
+
+.delete-icon {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 18px;
+  color: white;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 4px;
+  border-radius: 50%;
+  z-index: 2;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.delete-icon:hover {
+  background-color: rgba(255, 0, 0, 0.7);
+}
+
 
 .planning-photo {
   width: 100%;
