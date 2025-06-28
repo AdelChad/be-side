@@ -1,4 +1,4 @@
-import { ForbiddenException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Planning } from './planning.entity';
 import { Repository } from 'typeorm';
@@ -10,6 +10,7 @@ import { PlanningUpdateDto } from './dto/modify-planning.dto';
 import { Groupe } from 'src/groupe/groupe.entity';
 import { Restaurant } from 'src/restaurant/restaurant.entity';
 import { PlanningShareDto } from './dto/share-planning.dto';
+import { DeleteActivityDto } from './dto/delete-activity.dto';
 
 @Injectable()
 export class PlanningService {
@@ -25,6 +26,9 @@ export class PlanningService {
 
         @InjectRepository(Groupe)
         public groupeRepository: Repository<Groupe>,
+
+        @InjectRepository(ActivityDay)
+        public activityDayRepository: Repository<ActivityDay>,
     ) { }
 
     async getAllPlannings(user: User): Promise<Planning[]> {
@@ -251,6 +255,93 @@ export class PlanningService {
             console.error(error);
             throw new HttpException('Erreur lors de la modification du planning', HttpStatus.BAD_REQUEST);
         }
+    }
+
+    async removeActivityFromDay(dto: DeleteActivityDto,user: User): Promise<Planning> {
+        const { activityDayId, activityId, time } = dto;
+
+        const activityDay = await this.activityDayRepository.findOne({
+            where: { id: activityDayId },
+            relations: {
+            planning: {
+                user: true,
+                group: {
+                members: true,
+                },
+            },
+            morningActivity: true,
+            noondayActivity: true,
+            afternoonActivity: true,
+            eveningActivity: true,
+            nightActivity: true,
+            breakfastRestaurant: true,
+            lunchRestaurant: true,
+            dinnerRestaurant: true,
+            },
+        });
+
+        if (!activityDay) {
+            throw new NotFoundException('ActivityDay non trouvé');
+        }
+
+        const planning = activityDay.planning;
+
+        const isOwner = planning.user.id === user.id;
+        const isGroupMember = planning.group?.members.some(
+            (member) => member.id === user.id
+        );
+
+        if (!isOwner && !isGroupMember) {
+            throw new ForbiddenException('Accès refusé pour modifier ce planning');
+        }
+
+        switch (time) {
+            case 'morningActivity':
+            if (activityDay.morningActivity?.id === activityId) {
+                activityDay.morningActivity = null;
+            }
+            break;
+            case 'noondayActivity':
+            if (activityDay.noondayActivity?.id === activityId) {
+                activityDay.noondayActivity = null;
+            }
+            break;
+            case 'afternoonActivity':
+            if (activityDay.afternoonActivity?.id === activityId) {
+                activityDay.afternoonActivity = null;
+            }
+            break;
+            case 'eveningActivity':
+            if (activityDay.eveningActivity?.id === activityId) {
+                activityDay.eveningActivity = null;
+            }
+            break;
+            case 'nightActivity':
+            if (activityDay.nightActivity?.id === activityId) {
+                activityDay.nightActivity = null;
+            }
+            break;
+            case 'breakfastRestaurant':
+            if (activityDay.breakfastRestaurant?.id === activityId) {
+                activityDay.breakfastRestaurant = null;
+            }
+            break;
+            case 'lunchRestaurant':
+            if (activityDay.lunchRestaurant?.id === activityId) {
+                activityDay.lunchRestaurant = null;
+            }
+            break;
+            case 'dinnerRestaurant':
+            if (activityDay.dinnerRestaurant?.id === activityId) {
+                activityDay.dinnerRestaurant = null;
+            }
+            break;
+            default:
+            throw new BadRequestException('Créneau horaire invalide');
+        }
+
+        await activityDay.save();
+        return planning;
     }
 
     async getPlanningById(id: number, user: User): Promise<Planning> {

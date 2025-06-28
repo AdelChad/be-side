@@ -2,7 +2,7 @@
     import { ref, computed, onMounted } from 'vue'
     import { selectedPlanningId } from '../stores/planning'
 
-    const emits = defineEmits(['close', 'add'])
+    const emits = defineEmits(['close', 'updated', 'add', 'activity-added'])
 
     const token = localStorage.getItem('access_token')
     const activities = ref([])
@@ -82,6 +82,14 @@
             }
 
             const updatedPlanning = await response.json()
+            
+            emits('activity-added', {
+                activity: selectedActivity.value,
+                time: props.selectedTime,
+                planningId: selectedPlanningId.value
+            });
+            
+            emits('updated');
             emits('close');
         } catch (err) {
             console.error("Erreur lors de la mise à jour du planning :", err)
