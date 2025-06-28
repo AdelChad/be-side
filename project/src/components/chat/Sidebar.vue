@@ -166,7 +166,7 @@
 
 .search-input:focus {
   outline: none;
-  border-color: #007bff;
+  border-color: #e99415;
 }
 
 .search-input.error {
