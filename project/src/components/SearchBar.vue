@@ -3,8 +3,8 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { library } from '@fortawesome/fontawesome-svg-core'
-import { faMagnifyingGlass, faCaretDown } from '@fortawesome/free-solid-svg-icons'
-library.add(faMagnifyingGlass, faCaretDown)
+import { faMagnifyingGlass, faCaretDown, faUtensils, faPersonHiking } from '@fortawesome/free-solid-svg-icons'
+library.add(faMagnifyingGlass, faCaretDown, faUtensils, faPersonHiking)
 
 const router = useRouter()
 const searchText = ref('')
@@ -67,8 +67,18 @@ onUnmounted(() => {
   <div class="search-bar">
     <div class="dropdown" ref="dropdownRef">
       <button class="dropdown-btn" @click="toggleDropdown">
-        {{types.find(t => t.value === selectedType)?.label}}
-        <span class="arrow" :class="{ open: dropdownOpen }"><font-awesome-icon :icon="['fas', 'caret-down']" class="fa-plus-icon" /></span>
+        <span class="dropdown-label">
+          <span class="text-label">{{ types.find(t => t.value === selectedType)?.label }}</span>
+          <span class="icon-label" v-if="selectedType === 'activity'">
+            <font-awesome-icon icon="fa-solid fa-person-hiking" />
+          </span>
+          <span class="icon-label" v-else>
+            <font-awesome-icon icon="fa-solid fa-utensils" />
+          </span>
+        </span>
+        <span class="arrow" :class="{ open: dropdownOpen }">
+          <font-awesome-icon :icon="['fas', 'caret-down']" />
+        </span>
       </button>
       <ul v-if="dropdownOpen" class="dropdown-menu">
         <li v-for="typeOption in types" :key="typeOption.value" @click="selectType(typeOption.value)">
@@ -166,4 +176,28 @@ onUnmounted(() => {
   color: #333;
   margin-right:1rem;
 }
+
+@media (max-width: 768px) {
+
+.search-bar {
+  width:60%;
+}
+}
+
+
+@media (max-width: 500px) {
+  .text-label {
+    display: none;
+  }
+  .icon-label {
+    display: inline;
+  }
+}
+
+@media (min-width: 501px) {
+  .icon-label {
+    display: none;
+  }
+}
+
 </style>
