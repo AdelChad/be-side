@@ -1,5 +1,5 @@
 <script setup>
-  import { computed, ref, watch } from 'vue'
+  import { computed, ref, watch, onMounted } from 'vue'
   import { io } from 'socket.io-client'
   import { jwtDecode } from 'jwt-decode'
   import { selectedGroupId } from '../../stores/chat'
@@ -38,9 +38,15 @@
     auth: { token }
   })
 
+  onMounted(() => {
+  if (selectedGroupId.value) {
+    joinChannel(selectedGroupId.value)
+  }
+})
   
   watch(selectedGroupId, (newGroupId) => {
     if (newGroupId) {
+      planning.value = []
       joinChannel(newGroupId)
       groupName.value = ''
       errorMessage.value = ''
