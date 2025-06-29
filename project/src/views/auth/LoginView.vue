@@ -74,8 +74,7 @@ const submitForm = async (e: Event) => {
                     class="login-image">
                 <div class="login-overlay">
                     <h1 class="login-headline">Trouvez votre prochaine expérience en un clin d'oeil</h1>
-                    <p class="login-tagline">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla id est vitae
-                        nulla rhoncus.</p>
+                    <p class="login-tagline">Explorez des activités et restaurants sélectionnés pour vous, et organisez des sorties inoubliables en quelques clics.</p>
                 </div>
             </div>
 
