@@ -79,27 +79,23 @@
                         <img src="../../assets/icons/beside blanc.png" alt="Logo Beside" class="logo-img" />
                     </router-link>
                 </div>
+                <SearchBar class="search-bar-wrapper always-visible" />
                 <nav v-if="!route.meta.hideNavbar">
                     <div class="nav">
-                        <SearchBar class="search-bar-wrapper" />
-                        <div class="icon-link">
-                        <router-link to="/search" class="nav-link">
+                       <router-link to="/search" class="nav-link">
                         <font-awesome-icon :icon="['fas', 'sliders']" />
-                            Personnaliser
+                        <span>Personnaliser</span>
                         </router-link>
-                        </div>
-                        <div class="icon-link">
-                        <router-link to="/conversations" class="nav-link"> 
-                          <font-awesome-icon icon="fa-solid fa-message" />
-                            Messages
+
+                        <router-link to="/conversations" class="nav-link">
+                        <font-awesome-icon icon="fa-solid fa-message" />
+                        <span>Messages</span>
                         </router-link>
-                        </div>
-                        <div class="icon-link">
-                        <router-link to="/plannings" class="nav-link"> 
-                          <font-awesome-icon :icon="['fas', 'calendar-days']" />
-                            Plannings
+
+                        <router-link to="/plannings" class="nav-link">
+                        <font-awesome-icon :icon="['fas', 'calendar-days']" />
+                        <span>Plannings</span>
                         </router-link>
-                        </div>
                     </div>
                 </nav>
 
@@ -180,18 +176,25 @@
 .nav {
     display: none;
     align-items: center;
+    
 }
 
 .icon-link {
 display: flex;
+flex-direction: column; 
 text-align: center;
 }
 
 .nav-link {
-    margin: 0 var(--space-3);
-    position: relative;
-    color: var(--color-secondary);
-    transition: color var(--transition-fast);
+  display: flex;
+  flex-direction: column; 
+  align-items: center;
+  gap: 4px;
+  margin: 0 var(--space-3);
+  position: relative;
+  color: var(--color-secondary);
+  transition: color var(--transition-fast);
+  text-align: center;
 }
 
 .nav-link:hover,
@@ -317,6 +320,12 @@ text-align: center;
     color: var(--color-accent);
 }
 
+
+
+
+
+
+
 @media (max-width: 768px) {
 
     .nav,
@@ -328,6 +337,8 @@ text-align: center;
     .burger-btn {
         display: block;
     }
+
+
 }
 
 @media (min-width: 768px) {
