@@ -1,5 +1,5 @@
 <script setup>
-  import { ref, computed, onMounted } from 'vue'
+  import { ref, computed, onMounted, nextTick } from 'vue'
   import { jwtDecode } from 'jwt-decode'
   import { selectedGroupId } from '../../stores/chat'
 
@@ -65,6 +65,17 @@
     }
   }
 
+  function selectGroup(groupId) {
+  if (selectedGroupId.value === groupId) {
+    selectedGroupId.value = null
+    nextTick(() => {
+      selectedGroupId.value = groupId
+    })
+  } else {
+    selectedGroupId.value = groupId
+  }
+}
+
   onMounted(async () => {
     if (!token) return
 
@@ -124,7 +135,7 @@
   :key="chat.id"
   class="chat-item"
   :class="{ selected: selectedGroupId === chat.id }"
-  @click="selectedGroupId = chat.id"
+  @click="selectGroup(chat.id)"
 >
   <div class="chat-name">{{ chat.name }}</div>
 </div>

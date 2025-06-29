@@ -72,8 +72,10 @@ function joinChannel(channelId) {
 }
 
 watch(selectedGroupId, (newId) => {
-  if (newId) joinChannel(newId)
-})
+  if (newId) {
+    joinChannel(newId)
+  }
+}, { immediate: true })
 
 onMounted(() => {
   socket.on('channelMessages', (fetchedMessages) => {
