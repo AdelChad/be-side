@@ -100,7 +100,7 @@
                     <img src="https://images.pexels.com/photos/696218/pexels-photo-696218.jpeg" alt="BeSide Hero" class="hero-image">
                     <div class="hero-content container">
                     <h1 class="hero-title">Trouvez votre prochaine expérience en un clin d'oeil</h1>
-                    <p class="hero-subtitle">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam id commodo nibh.</p>
+                    <p class="hero-subtitle"> Explorez les meilleures sorties, sans perdre de temps.</p>
                     <router-link to="/search" class="btn btn-primary hero-cta">Commencer maintenant</router-link>
                     </div>
                 </div>
